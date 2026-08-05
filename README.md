@@ -31,13 +31,11 @@ O sistema **nunca nega comida a aluno**. Quem não confirmou passa igual; a conf
 
 | Parte | Tecnologia | O que faz |
 |---|---|---|
-| Servidor | Python + SQLite | Guarda tudo e calcula a previsão. Roda numa máquina da escola. **Pronto.** |
-| Totem e cozinha | Python + Tkinter | Um programa, dois modos: a tela da fila e o painel da cozinha. *(em migração)* |
+| Servidor | Python + SQLite | Guarda tudo e calcula a previsão. Roda numa máquina da escola. |
+| Totem e cozinha | Python + Tkinter | Um programa, dois modos: a tela da fila e o painel da cozinha. |
 | App do aluno | Kotlin + Compose | Declaração e QR pessoal. *(fase 2)* |
 
-> O totem existiu primeiro em JavaFX e passou na verificação, mas o atrito do
-> Java não compensou. Está sendo reescrito em Tkinter, junto do resto — ver
-> [PROXIMOS-PASSOS.md](PROXIMOS-PASSOS.md).
+Nenhuma interface web e nenhuma dependência externa: tudo com a biblioteca padrão do Python.
 
 Nenhuma interface web. O servidor expõe só API JSON.
 
@@ -59,9 +57,23 @@ O endereço aparece no console. É ele que o totem e os celulares usam.
 
 ### Totem
 
-Em migração para Tkinter. O desenho das telas e o passo a passo estão em [PROXIMOS-PASSOS.md](PROXIMOS-PASSOS.md).
+```bash
+python totem.py --servidor=http://192.168.0.10:8770
+```
 
-**Modo gestão** (quando estiver pronto): três toques no rodapé, ou `Ctrl+Alt+G`, e o PIN.
+O endereço fica salvo em `~/.siarrn/totem.json` e não precisa ser repetido. Abre em tela cheia sem saída — é um totem, não uma janela.
+
+Opções úteis: `--janela` roda sem tela cheia (desenvolvimento) e `--gestao` abre direto no painel da cozinha.
+
+**Modo gestão:** três toques no rodapé, ou `Ctrl+Alt+G`, e o PIN (padrão `1234`, mude em `~/.siarrn/totem.json`).
+
+### Conferindo a instalação
+
+Antes de a fila se formar, dá para checar se aquela máquina enxerga o servidor:
+
+```bash
+python totem.py --verificar --servidor=http://192.168.0.10:8770
+```
 
 ### Testes
 

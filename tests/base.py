@@ -21,4 +21,7 @@ class ComBanco(unittest.TestCase):
         dados.init_db()
 
     def tearDown(self) -> None:
+        # A conexão fica aberta entre operações (ver dados.get_connection), e no
+        # Windows um arquivo com handle aberto não pode ser apagado.
+        dados.fechar_conexao()
         self._pasta.cleanup()

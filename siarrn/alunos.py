@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import secrets
 import sqlite3
-import unicodedata
 
 from . import dados
+from .texto import normalizar  # noqa: F401  (reexportado: alunos.normalizar é a API usada)
 
 # Alfabeto sem caracteres ambíguos. Se alguém precisar ler o código impresso
 # e digitar à mão, 0/O e 1/I/L viram fonte de erro — melhor nem existirem.
@@ -24,19 +24,10 @@ LIMITE_BUSCA = 20
 
 
 # ---------------------------------------------------------------------------
-# Normalização
+# Código do QR
 # ---------------------------------------------------------------------------
-def normalizar(texto: str) -> str:
-    """Reduz o nome à forma usada na busca: minúsculo, sem acento, sem espaço extra.
-
-    É o que faz "joao", "João" e "JOAO" encontrarem a mesma pessoa. Numa fila
-    de almoço ninguém vai acertar o acento — e não deveria precisar.
-    """
-    sem_acento = unicodedata.normalize("NFKD", texto)
-    sem_acento = "".join(c for c in sem_acento if not unicodedata.combining(c))
-    return " ".join(sem_acento.lower().split())
-
-
+# `normalizar` mora em texto.py e é reexportada aqui: o totem precisa dela sem
+# poder importar a camada de dados, já que roda em outra máquina.
 def gerar_codigo() -> str:
     """Gera um código aleatório para o QR do aluno.
 

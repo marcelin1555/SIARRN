@@ -12,9 +12,11 @@
 *.db-wal
 *.db-shm
 
-# --- Fila offline do totem (estado local da máquina, nunca versionar) ---
-/totem/fila-local/
-*.fila
+# --- Estado local do totem (da máquina, nunca versionar) ---
+# A fila de almoços e a cópia da base de alunos ficam em ~/.siarrn/, mas se
+# alguém apontar o totem para uma pasta dentro do projeto, não vão para o git.
+/.siarrn/
+*.jsonl
 
 # --- Bytecode e caches do Python ---
 __pycache__/
@@ -28,24 +30,15 @@ venv/
 env/
 ENV/
 
-# --- Java / Gradle (totem e app Android) ---
+# --- Android (app do aluno, fase 2) ---
 .gradle/
-build/
-!src/**/build/
 local.properties
-*.class
-*.jar
-# O wrapper precisa de duas estrelas: o projeto Java fica em totem/, e um padrão
-# com barra no meio é ancorado na raiz do repositório. Sem esta linha o jar não
-# é versionado e quem clonar não consegue rodar o ./gradlew.
-!**/gradle/wrapper/gradle-wrapper.jar
 *.apk
 *.aab
-*.hprof
 .kotlin/
-captures/
 
 # --- Distribuição / empacotamento ---
+build/
 dist/
 *.egg-info/
 *.egg
