@@ -1,0 +1,79 @@
+# =====================================================================
+# SIARRN — .gitignore
+# =====================================================================
+
+# --- Banco de dados local (criado em runtime) ---
+# A barra inicial ancora a regra na raiz. Sem ela, "data/" casaria com
+# qualquer pasta chamada data em qualquer profundidade — inclusive a
+# camada de dados do app Android.
+/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# --- Fila offline do totem (estado local da máquina, nunca versionar) ---
+/totem/fila-local/
+*.fila
+
+# --- Bytecode e caches do Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# --- Ambientes virtuais ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Java / Gradle (totem e app Android) ---
+.gradle/
+build/
+!src/**/build/
+local.properties
+*.class
+*.jar
+# O wrapper precisa de duas estrelas: o projeto Java fica em totem/, e um padrão
+# com barra no meio é ancorado na raiz do repositório. Sem esta linha o jar não
+# é versionado e quem clonar não consegue rodar o ./gradlew.
+!**/gradle/wrapper/gradle-wrapper.jar
+*.apk
+*.aab
+*.hprof
+.kotlin/
+captures/
+
+# --- Distribuição / empacotamento ---
+dist/
+*.egg-info/
+*.egg
+
+# --- Editores / IDEs ---
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Logs e temporários ---
+*.log
+*.tmp
+*.bak
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# --- Saídas geradas ---
+relatorios/
+exports/
+cartoes/
+*.csv
+
+# --- Artefatos locais do Claude/Cowork (não versionar) ---
+.claude/
+.agents/
+skills-lock.json
