@@ -8,6 +8,14 @@ Escrito para quem usa o sistema — direção, cozinha e alunos. Quem for mexer 
 
 Primeira versão que roda de ponta a ponta. Já dá para instalar numa máquina, ligar na fila do almoço e começar a medir.
 
+### O totem tem uma tela de apresentação
+
+Quando ninguém está usando, o totem mostra o nome do sistema, fotos do refeitório passando devagar e — em letras grandes — **o cardápio do dia**. Dá para saber o que tem no almoço do outro lado do refeitório, sem encostar em nada.
+
+Um toque em qualquer lugar da tela leva à busca. Depois de um tempo parado, ele volta sozinho para a apresentação.
+
+As fotos ficam em `assets/fotos/`: é só colocar os arquivos na pasta. O sistema escurece as imagens automaticamente para o texto continuar legível, então não é preciso editar nada antes. Sem fotos, a tela funciona igual com o fundo azul da escola.
+
 ### A cozinha passa a saber quantos pratos preparar
 
 Um painel mostra o número do dia em letras grandes, com a explicação de onde ele saiu: quantos confirmaram presença, quantos avisaram que não vêm, e quantos não disseram nada — esses últimos entram na conta pelo hábito de cada um, não por chute.

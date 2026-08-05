@@ -1,0 +1,10 @@
+# SIARRN — dependências
+#
+# O servidor (siarrn.py) não precisa de nada além da biblioteca padrão: pode
+# rodar numa máquina da escola sem instalar coisa alguma.
+#
+# O totem (totem.py) usa Pillow apenas na tela de início, para exibir fotos em
+# JPG/PNG. O Tkinter sozinho só lê GIF e PPM. Sem Pillow o totem continua
+# funcionando: a tela de início cai para o fundo institucional sólido.
+
+Pillow>=10.0

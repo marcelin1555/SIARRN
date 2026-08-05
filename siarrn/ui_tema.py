@@ -55,6 +55,13 @@ TAM_NOME_CONFIRMADO = 58    # a tela verde — o maior texto do sistema
 TAM_MENSAGEM = 26
 TAM_RODAPE = 11
 
+# Tela de início — vista do outro lado do refeitório, não da fila
+TAM_INICIO_NOME = 76
+TAM_INICIO_SUB = 19
+TAM_INICIO_CARDAPIO_ROTULO = 13
+TAM_INICIO_CARDAPIO = 27
+TAM_INICIO_CHAMADA = 22
+
 TAM_GESTAO_TITULO = 21
 TAM_GESTAO_NUMERO = 56      # quantos pratos preparar
 TAM_GESTAO_ROTULO = 12

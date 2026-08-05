@@ -24,6 +24,7 @@ from siarrn.cliente_api import ClienteApi
 from siarrn.config_totem import Config
 from siarrn.fila_offline import FilaOffline
 from siarrn.ui_gestao import TelaGestao
+from siarrn.ui_inicio import TelaInicio
 from siarrn.ui_totem import TelaTotem
 
 # De quanto em quanto tempo a fila local tenta se esvaziar.
@@ -31,6 +32,13 @@ SEGUNDOS_SINCRONIZACAO = 20
 
 # A base de alunos muda pouco; uma vez por hora é mais que suficiente.
 SEGUNDOS_BASE = 3600
+
+# Depois disto sem ninguém tocar, o totem volta à tela de início.
+#
+# O número é um equilíbrio: curto demais e a tela troca na cara de quem está
+# procurando o próprio nome devagar; longo demais e o totem passa o intervalo
+# inteiro exibindo um campo de busca vazio, em vez do cardápio do dia.
+MILISSEGUNDOS_INATIVIDADE = 45_000
 
 
 class AplicacaoTotem:
@@ -52,16 +60,26 @@ class AplicacaoTotem:
 
         self._configurar_janela()
 
+        self.tela_inicio = TelaInicio(self.raiz, self.cliente, self.entrar_na_busca)
         self.tela_totem = TelaTotem(
             self.raiz, self.base, self.fila, self.cliente, self.abrir_gestao
         )
         self.tela_gestao: TelaGestao | None = None
-        self.tela_totem.pack(fill="both", expand=True)
+
+        self._inatividade = None
+        self.tela_inicio.pack(fill="both", expand=True)
+        self.tela_inicio.iniciar()
 
         # Atalho alternativo ao toque triplo no rodapé: em máquina com teclado,
         # é mais rápido para quem trabalha na cozinha.
         self.raiz.bind_all("<Control-Alt-g>", lambda e: self.abrir_gestao())
         self.raiz.bind_all("<Control-Alt-G>", lambda e: self.abrir_gestao())
+
+        # Qualquer toque ou tecla adia a volta à tela de início. O `add="+"`
+        # é essencial: sem ele estes bindings substituiriam os das telas, e o
+        # campo de busca pararia de receber o que é digitado.
+        self.raiz.bind_all("<Key>", self._adiar_inicio, add="+")
+        self.raiz.bind_all("<Button>", self._adiar_inicio, add="+")
 
         self._parar = threading.Event()
         self._iniciar_tarefas_de_fundo()
@@ -84,17 +102,37 @@ class AplicacaoTotem:
         self.raiz.protocol("WM_DELETE_WINDOW", lambda: None)
 
     # -----------------------------------------------------------------------
-    # Alternância de modo
+    # Alternância de telas
     # -----------------------------------------------------------------------
+    def _esconder_tudo(self) -> None:
+        self.tela_inicio.parar()
+        self.tela_inicio.pack_forget()
+        self.tela_totem.pack_forget()
+        self._cancelar_inatividade()
+
+    def entrar_na_busca(self) -> None:
+        """Alguém tocou na tela de início: hora de procurar o nome."""
+        self._esconder_tudo()
+        self.tela_totem.pack(fill="both", expand=True)
+        self.tela_totem.mostrar_busca()
+        self._adiar_inicio()
+
+    def voltar_ao_inicio(self) -> None:
+        """Ninguém mexeu por um tempo: volta a mostrar o cardápio e as fotos."""
+        self._esconder_tudo()
+        self.tela_inicio.pack(fill="both", expand=True)
+        self.tela_inicio.iniciar()
+
     def abrir_gestao(self) -> None:
         if self.tela_gestao is not None:
             return
-        if not ui_dialogos.pedir_pin(self.tela_totem, self.config.pin):
+        pai = self.tela_totem if self.tela_totem.winfo_ismapped() else self.tela_inicio
+        if not ui_dialogos.pedir_pin(pai, self.config.pin):
             return
         self._trocar_para_gestao()
 
     def _trocar_para_gestao(self) -> None:
-        self.tela_totem.pack_forget()
+        self._esconder_tudo()
         self.tela_gestao = TelaGestao(self.raiz, self.cliente, self.fila, self.voltar_ao_totem)
         self.tela_gestao.pack(fill="both", expand=True)
         self.tela_gestao.iniciar()
@@ -104,8 +142,25 @@ class AplicacaoTotem:
             self.tela_gestao.parar()
             self.tela_gestao.destroy()
             self.tela_gestao = None
-        self.tela_totem.pack(fill="both", expand=True)
-        self.tela_totem.mostrar_busca()
+        self.voltar_ao_inicio()
+
+    # -----------------------------------------------------------------------
+    # Volta automática à tela de início
+    # -----------------------------------------------------------------------
+    def _cancelar_inatividade(self) -> None:
+        if self._inatividade is not None:
+            self.raiz.after_cancel(self._inatividade)
+            self._inatividade = None
+
+    def _adiar_inicio(self, _evento=None) -> None:
+        self._cancelar_inatividade()
+        # Só conta enquanto a busca está na tela. Na gestão alguém pode estar
+        # lendo os números sem tocar em nada, e na própria tela de início não
+        # há para onde voltar.
+        if self.tela_gestao is None and self.tela_totem.winfo_ismapped():
+            self._inatividade = self.raiz.after(
+                MILISSEGUNDOS_INATIVIDADE, self.voltar_ao_inicio
+            )
 
     # -----------------------------------------------------------------------
     # Tarefas de fundo
@@ -148,10 +203,6 @@ class AplicacaoTotem:
     # Execução
     # -----------------------------------------------------------------------
     def executar(self) -> None:
-        # O foco só cola depois que a janela existe de verdade na tela; pedir
-        # antes do mainloop não tem efeito, e o totem precisa aceitar digitação
-        # sem ninguém clicar no campo primeiro.
-        self.raiz.after(120, self.tela_totem.mostrar_busca)
         try:
             self.raiz.mainloop()
         finally:

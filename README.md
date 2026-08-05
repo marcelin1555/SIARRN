@@ -35,7 +35,11 @@ O sistema **nunca nega comida a aluno**. Quem não confirmou passa igual; a conf
 | Totem e cozinha | Python + Tkinter | Um programa, dois modos: a tela da fila e o painel da cozinha. |
 | App do aluno | Kotlin + Compose | Declaração e QR pessoal. *(fase 2)* |
 
-Nenhuma interface web e nenhuma dependência externa: tudo com a biblioteca padrão do Python.
+Nenhuma interface web. O servidor roda só com a biblioteca padrão do Python; o totem usa Pillow apenas para exibir as fotos da tela de início, e funciona sem ele.
+
+```bash
+pip install -r requirements.txt
+```
 
 Nenhuma interface web. O servidor expõe só API JSON.
 
@@ -62,6 +66,8 @@ python totem.py --servidor=http://192.168.0.10:8770
 ```
 
 O endereço fica salvo em `~/.siarrn/totem.json` e não precisa ser repetido. Abre em tela cheia sem saída — é um totem, não uma janela.
+
+Ele começa na tela de apresentação, com o cardápio do dia e as fotos de `assets/fotos/` (veja o [LEIA-ME](assets/fotos/LEIA-ME.md) de lá). Um toque leva à busca, e depois de 45 segundos parado ele volta sozinho.
 
 Opções úteis: `--janela` roda sem tela cheia (desenvolvimento) e `--gestao` abre direto no painel da cozinha.
 
