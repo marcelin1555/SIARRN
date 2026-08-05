@@ -1,6 +1,6 @@
 # SIARRN — Sistema Integrado de Almoço e Refeição
 
-> Documento de design. Escrito em 2026-08-04, antes da primeira linha de código.
+> Documento de design. Escrito em 2026-08-05, antes da primeira linha de código.
 >
 > **Revisado no mesmo dia, depois da fase 1:** o totem foi escrito em JavaFX,
 > funcionou e passou na verificação, mas o custo de atrito do Java (Gradle, JDK,

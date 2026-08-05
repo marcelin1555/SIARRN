@@ -103,7 +103,7 @@ Medido nesta máquina: **0,6 ms** para registrar um almoço em disco, e a fila c
 
 **Fase 3 — aprender.** Relatórios e correlação entre cardápio e comparecimento.
 
-O design completo, com as decisões e o porquê de cada uma, está em [docs/](docs/2026-08-04-siarrn-design.md).
+O que já funciona, em linguagem de escola, está em [CHANGELOG.md](CHANGELOG.md). O design completo, com as decisões e o porquê de cada uma, está em [docs/](docs/2026-08-05-siarrn-design.md). O que vem a seguir, em [PROXIMOS-PASSOS.md](PROXIMOS-PASSOS.md).
 
 ---
 
