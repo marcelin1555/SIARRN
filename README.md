@@ -31,9 +31,13 @@ O sistema **nunca nega comida a aluno**. Quem não confirmou passa igual; a conf
 
 | Parte | Tecnologia | O que faz |
 |---|---|---|
-| Servidor | Python + SQLite | Guarda tudo e calcula a previsão. Roda numa máquina da escola. |
-| Totem e cozinha | JavaFX | Um programa, dois modos: a tela da fila e o painel da cozinha. |
+| Servidor | Python + SQLite | Guarda tudo e calcula a previsão. Roda numa máquina da escola. **Pronto.** |
+| Totem e cozinha | Python + Tkinter | Um programa, dois modos: a tela da fila e o painel da cozinha. *(em migração)* |
 | App do aluno | Kotlin + Compose | Declaração e QR pessoal. *(fase 2)* |
+
+> O totem existiu primeiro em JavaFX e passou na verificação, mas o atrito do
+> Java não compensou. Está sendo reescrito em Tkinter, junto do resto — ver
+> [PROXIMOS-PASSOS.md](PROXIMOS-PASSOS.md).
 
 Nenhuma interface web. O servidor expõe só API JSON.
 
@@ -55,27 +59,9 @@ O endereço aparece no console. É ele que o totem e os celulares usam.
 
 ### Totem
 
-Precisa de JDK 21. O Gradle vem junto pelo wrapper — não precisa instalar nada.
+Em migração para Tkinter. O desenho das telas e o passo a passo estão em [PROXIMOS-PASSOS.md](PROXIMOS-PASSOS.md).
 
-```bash
-cd totem
-./gradlew run --args="--servidor=http://192.168.0.10:8770"
-```
-
-O endereço fica salvo em `~/.siarrn/totem.properties` e não precisa ser repetido.
-
-Opções úteis: `--janela` roda sem tela cheia (desenvolvimento) e `--gestao` abre direto no painel da cozinha.
-
-**Modo gestão:** três toques no rodapé, ou `Ctrl+Alt+G`, e o PIN (padrão `1234`, mude em `~/.siarrn/totem.properties`).
-
-### Conferindo a instalação
-
-Antes de a fila se formar, dá para checar se aquela máquina enxerga o servidor:
-
-```bash
-cd totem
-./gradlew verificar --args="--servidor=http://192.168.0.10:8770"
-```
+**Modo gestão** (quando estiver pronto): três toques no rodapé, ou `Ctrl+Alt+G`, e o PIN.
 
 ### Testes
 

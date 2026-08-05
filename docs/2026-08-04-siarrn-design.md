@@ -1,6 +1,15 @@
 # SIARRN — Sistema Integrado de Almoço e Refeição
 
 > Documento de design. Escrito em 2026-08-04, antes da primeira linha de código.
+>
+> **Revisado no mesmo dia, depois da fase 1:** o totem foi escrito em JavaFX,
+> funcionou e passou na verificação, mas o custo de atrito do Java (Gradle, JDK,
+> JavaFX fora do JDK) não se pagou. **Passa a ser Python + Tkinter**, como o
+> SIGBEF. O ganho vai além do conforto: a normalização de nome deixa de existir
+> em duas linguagens, o tema do SIGBEF vira código reaproveitado em vez de
+> referência, e o empacotamento passa a ser o PyInstaller que o projeto irmão já
+> usa. Os trechos abaixo que citam JavaFX estão mantidos como registro da
+> decisão anterior. O plano de migração está em `PROXIMOS-PASSOS.md`.
 
 ## Contexto
 
@@ -26,7 +35,7 @@ Resultado esperado: em um mês, a cozinha troca a margem de medo por dados, e a 
 | Quem não confirmou | Passa igual, em fila não preferencial | Almoço é direito, não benefício condicionado. Bloquear negaria comida a aluno e o sistema seria desligado na primeira reclamação. |
 | Cadastro | Auto-cadastro no 1º uso | Não depende de secretaria, autorização ou planilha. O projeto pode começar numa terça-feira qualquer. |
 | Servidor | Python + SQLite, local na escola | Há Wi-Fi que os alunos alcançam. Sem custo de hospedagem, e funciona mesmo se a internet cair. |
-| Totem + cozinha | JavaFX, um programa com dois modos | Aprendizado de Java; um binário só pra escola instalar; flexível enquanto não há equipamento definido. |
+| Totem + cozinha | ~~JavaFX~~ → **Python + Tkinter**, um programa com dois modos | Um executável só pra escola instalar. Compartilha código com o servidor e reaproveita o tema e o terminal de autoatendimento do SIGBEF. |
 | App do aluno | Kotlin + Jetpack Compose | Nativo e bonito com pouco código. Material 3 e animação saem de graça; Kotlin já usado no `sigbef-mobile`. |
 | Refeições | Só almoço, modelo aberto | Campo `turno` já existe; suportar lanche depois não exige migração. |
 
