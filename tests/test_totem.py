@@ -271,5 +271,59 @@ class FilaOfflineTest(ComPastaTemporaria):
         self.assertEqual(self.fila.pendentes(), 1)
 
 
+class ContaDaSobra(unittest.TestCase):
+    """A regra que traduz preparado × servido na frase que a cozinha lê.
+
+    É lógica de negócio, não formatação: define o que conta como sobra
+    aceitável e o que merece sinal de atenção no dia seguinte. Roda sem abrir
+    janela porque o método é estático.
+    """
+
+    @staticmethod
+    def _sobra(preparado, consumidos):
+        from siarrn.ui_gestao import TelaGestao
+        return TelaGestao._texto_da_sobra(preparado, consumidos)
+
+    def test_sem_preparado_informado_pede_o_numero(self):
+        texto, _ = self._sobra(None, 74)
+        self.assertIn("informe", texto.lower())
+
+    def test_sobra_grande_recebe_cor_de_atencao(self):
+        from siarrn import ui_tema as tema
+        texto, cor = self._sobra(100, 74)
+        self.assertIn("sobraram 26", texto)
+        self.assertEqual(cor, tema.COR_AVISO)
+
+    def test_sobra_pequena_esta_ok(self):
+        from siarrn import ui_tema as tema
+        texto, cor = self._sobra(78, 74)
+        self.assertIn("sobraram 4", texto)
+        self.assertEqual(cor, tema.COR_SUCESSO)
+
+    def test_margem_minima_nao_vira_alarme(self):
+        """Numa escola pequena, três pratos de margem é prudência, não desperdício."""
+        from siarrn import ui_tema as tema
+        _, cor = self._sobra(23, 20)
+        self.assertEqual(cor, tema.COR_SUCESSO)
+
+    def test_acertar_na_mosca(self):
+        from siarrn import ui_tema as tema
+        texto, cor = self._sobra(74, 74)
+        self.assertIn("não sobrou nada", texto)
+        self.assertEqual(cor, tema.COR_SUCESSO)
+
+    def test_faltar_comida_e_sinalizado(self):
+        """Aluno sem almoço é pior que comida no lixo, e também pede correção."""
+        from siarrn import ui_tema as tema
+        texto, cor = self._sobra(70, 74)
+        self.assertIn("faltaram 4", texto)
+        self.assertEqual(cor, tema.COR_AVISO)
+
+    def test_singular_quando_falta_um(self):
+        texto, _ = self._sobra(73, 74)
+        self.assertIn("faltaram 1 prato", texto)
+        self.assertNotIn("pratos", texto)
+
+
 if __name__ == "__main__":
     unittest.main()

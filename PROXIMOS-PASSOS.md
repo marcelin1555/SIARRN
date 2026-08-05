@@ -34,4 +34,4 @@ Relatórios e a correlação entre cardápio e comparecimento. O campo `refeicao
 
 - O totem ainda não tem tela de configuração: o endereço do servidor entra por `--servidor` ou editando `~/.siarrn/totem.json` na mão.
 - Não há tela para corrigir nome digitado errado no cadastro (`alunos.renomear` existe no servidor, mas sem interface).
-- O painel da cozinha não deixa registrar quantos pratos foram de fato preparados (`refeicoes.definir_preparado` existe, sem interface). Sem esse número, a conta da sobra fica pela metade.
+- A sobra é calculada no dia, mas não há histórico dela. Saber que sobraram 18 pratos hoje ajuda; ver a curva das últimas três semanas é o que muda o comportamento da cozinha. Fica para a fase 3, junto dos relatórios.

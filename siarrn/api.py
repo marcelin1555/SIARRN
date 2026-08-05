@@ -167,6 +167,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._registrar_declaracao(corpo)
         if caminho == "/api/refeicao/cardapio":
             return self._definir_cardapio(corpo)
+        if caminho == "/api/refeicao/preparado":
+            return self._definir_preparado(corpo)
 
         return self._erro(404, "Rota não encontrada.")
 
@@ -248,6 +250,21 @@ class Handler(BaseHTTPRequestHandler):
         refeicoes.definir_cardapio(refeicao_id, cardapio)
         return self._responder(200, {"refeicao_id": refeicao_id, "cardapio": cardapio})
 
+    def _definir_preparado(self, corpo: dict) -> None:
+        """Quantos pratos a cozinha de fato preparou.
+
+        É a outra metade da conta do desperdício. O sistema já sabia quantos
+        almoçaram; sem este número, sabia quantos comeram mas não quanto foi
+        jogado fora — e reduzir a sobra é o objetivo declarado do projeto.
+        """
+        quantidade = corpo.get("preparado")
+        if not isinstance(quantidade, int) or quantidade < 0:
+            return self._erro(400, "Informe 'preparado' como um número inteiro não negativo.")
+
+        refeicao_id = corpo.get("refeicao_id") or refeicoes.garantir()["id"]
+        refeicoes.definir_preparado(refeicao_id, quantidade)
+        return self._responder(200, {"refeicao_id": refeicao_id, "preparado": quantidade})
+
     def _painel_do_dia(self) -> dict:
         """Tudo o que a cozinha precisa ver, numa resposta só."""
         refeicao = refeicoes.garantir()
@@ -273,11 +290,31 @@ class Handler(BaseHTTPRequestHandler):
 # ---------------------------------------------------------------------------
 # Servidor
 # ---------------------------------------------------------------------------
-def criar_servidor(porta: int = PORTA_PADRAO) -> ThreadingHTTPServer:
+class Servidor(ThreadingHTTPServer):
+    """Servidor que devolve a conexão do banco quando o cliente vai embora.
+
+    A conexão SQLite é mantida por thread (ver `dados.get_connection`), e aqui
+    cada cliente é atendido na sua. Enquanto ele fica conectado — com
+    keep-alive, o totem fica —, a conexão é reaproveitada; quando desconecta, a
+    thread acaba e a conexão precisa ser fechada explicitamente. Sem isto ela
+    ficaria órfã esperando o coletor de lixo, e num dia de almoço isso vira
+    dezenas de conexões abertas à toa.
+    """
+
+    daemon_threads = True
+
+    def process_request_thread(self, request, client_address) -> None:
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            dados.fechar_conexao()
+
+
+def criar_servidor(porta: int = PORTA_PADRAO) -> Servidor:
     """Sobe o servidor em todas as interfaces — o totem e os celulares
     precisam alcançá-lo pela rede da escola, não só pelo loopback."""
     dados.init_db()
-    return ThreadingHTTPServer(("0.0.0.0", porta), Handler)
+    return Servidor(("0.0.0.0", porta), Handler)
 
 
 def endereco_visivel(porta: int) -> str:

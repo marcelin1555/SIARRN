@@ -155,6 +155,14 @@ class ClienteApi:
             "origem": origem,
         })
 
+    def definir_cardapio(self, cardapio: str) -> None:
+        """O que vai ser servido hoje. Só a cozinha sabe."""
+        self._requisitar("POST", "/api/refeicao/cardapio", {"cardapio": cardapio})
+
+    def definir_preparado(self, quantidade: int) -> None:
+        """Quantos pratos foram preparados — a outra metade da conta da sobra."""
+        self._requisitar("POST", "/api/refeicao/preparado", {"preparado": quantidade})
+
     def painel_de_hoje(self) -> dict:
         painel = self._requisitar("GET", "/api/cozinha/hoje")
         if not painel:

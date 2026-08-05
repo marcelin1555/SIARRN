@@ -14,7 +14,6 @@ import threading
 import unittest
 import urllib.error
 import urllib.request
-from http.server import ThreadingHTTPServer
 
 from siarrn import alunos, api, refeicoes
 
@@ -31,7 +30,9 @@ class _HandlerSilencioso(api.Handler):
 class ServidorNoAr(ComBanco):
     def setUp(self) -> None:
         super().setUp()
-        self.servidor = ThreadingHTTPServer(("127.0.0.1", 0), _HandlerSilencioso)
+        # A mesma classe da produção: é ela que fecha a conexão do banco quando
+        # a thread do cliente acaba.
+        self.servidor = api.Servidor(("127.0.0.1", 0), _HandlerSilencioso)
         self.porta = self.servidor.server_address[1]
         self.thread = threading.Thread(target=self.servidor.serve_forever, daemon=True)
         self.thread.start()
@@ -176,6 +177,51 @@ class Declaracao(ServidorNoAr):
     def test_vai_precisa_ser_booleano(self):
         resposta = self._post("/api/declaracao", {"aluno_id": self.aluno["id"], "vai": "sim"})
         self.assertEqual(resposta[0], 400)
+
+
+class PratosPreparados(ServidorNoAr):
+    """A outra metade da conta do desperdício.
+
+    Sem este número o sistema sabe quantos comeram, mas não quanto foi jogado
+    fora — e reduzir a sobra é o objetivo declarado do projeto.
+    """
+
+    def test_registra_e_aparece_no_painel(self):
+        status, corpo = self._post("/api/refeicao/preparado", {"preparado": 80})
+        self.assertEqual(status, 200)
+        self.assertEqual(corpo["preparado"], 80)
+
+        _, painel = self._get("/api/cozinha/hoje")
+        self.assertEqual(painel["preparado"], 80)
+
+    def test_aceita_zero(self):
+        """Dia sem almoço servido é informação, não erro."""
+        self.assertEqual(self._post("/api/refeicao/preparado", {"preparado": 0})[0], 200)
+
+    def test_recusa_negativo(self):
+        self.assertEqual(self._post("/api/refeicao/preparado", {"preparado": -5})[0], 400)
+
+    def test_recusa_texto(self):
+        self.assertEqual(self._post("/api/refeicao/preparado", {"preparado": "oitenta"})[0], 400)
+
+    def test_recusa_ausente(self):
+        self.assertEqual(self._post("/api/refeicao/preparado", {})[0], 400)
+
+    def test_pode_ser_corrigido(self):
+        """A cozinha erra de primeira e conserta — sem criar registro novo."""
+        self._post("/api/refeicao/preparado", {"preparado": 80})
+        self._post("/api/refeicao/preparado", {"preparado": 92})
+
+        _, painel = self._get("/api/cozinha/hoje")
+        self.assertEqual(painel["preparado"], 92)
+
+    def test_cardapio_e_preparado_convivem(self):
+        self._post("/api/refeicao/cardapio", {"cardapio": "Baião de dois"})
+        self._post("/api/refeicao/preparado", {"preparado": 80})
+
+        _, painel = self._get("/api/cozinha/hoje")
+        self.assertEqual(painel["cardapio"], "Baião de dois")
+        self.assertEqual(painel["preparado"], 80)
 
 
 class Painel(ServidorNoAr):

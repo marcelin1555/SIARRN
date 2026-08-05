@@ -32,6 +32,12 @@ Se a rede oscilar no meio do almoço, o totem continua achando os nomes e regist
 
 O sistema nunca recusa um aluno. Quem não confirmou presença passa igual e é registrado normalmente; confirmar dá direito à fila preferencial, não ao prato. Nenhuma tela do totem mostra vermelho.
 
+### A conta da sobra fecha
+
+A cozinha informa no painel o cardápio do dia e quantos pratos preparou. Com isso, a tela passa a dizer não só quantos almoçaram, mas quanto sobrou — *"92 preparados · sobraram 18"* —, destacando quando a diferença é grande demais.
+
+É a conta que o sistema existe para melhorar. Sem esse número, dava para saber quantos comeram, mas não quanto foi para o lixo.
+
 ### O painel da cozinha fica protegido
 
 O totem abre em tela cheia, sem saída visível, porque fica sozinho numa fila cheia de gente. O painel da cozinha entra por três toques no rodapé ou um atalho de teclado, sempre com PIN.
