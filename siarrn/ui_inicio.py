@@ -52,10 +52,16 @@ LIMITE_MS_POR_QUADRO = 45
 
 MILISSEGUNDOS_CARDAPIO = 60_000
 
-# Quanto o fundo é puxado para o azul institucional. Escurece o suficiente para
-# o texto branco ficar legível sobre qualquer foto, e de quebra faz fotos de
-# origens diferentes parecerem da mesma família.
-FORCA_DO_TINGIMENTO = 0.55
+# Quanto a foto é puxada para o azul institucional.
+#
+# É pouco de propósito. A foto ocupa um painel só dela, sem texto por cima, e
+# portanto não precisa ser escurecida para nada ficar legível — o tingimento
+# aqui serve apenas para que fotos tiradas em dias, luzes e câmeras diferentes
+# pareçam da mesma família.
+FORCA_DO_TINGIMENTO = 0.18
+
+# Quanto da largura o painel da foto ocupa.
+FATIA_DA_FOTO = 0.40
 
 
 class TelaInicio(tk.Frame):
@@ -74,8 +80,10 @@ class TelaInicio(tk.Frame):
         self._largura = 0
         self._altura = 0
 
+        self._area_foto = (0, 0, 0, 0)   # x, y, largura, altura do painel da foto
+
         self._tela = tk.Canvas(
-            self, bg=tema.COR_PRIMARIA, highlightthickness=0, cursor="hand2"
+            self, bg=tema.COR_FUNDO, highlightthickness=0, cursor="hand2"
         )
         self._tela.pack(fill="both", expand=True)
 
@@ -114,10 +122,18 @@ class TelaInicio(tk.Frame):
             return
 
         self._largura, self._altura = evento.width, evento.height
+        self._calcular_area_foto()
         self._desenhar_conteudo()
 
         if PILLOW_DISPONIVEL and self._largura > 1 and self._altura > 1:
             threading.Thread(target=self._carregar_fotos, daemon=True).start()
+
+    def _calcular_area_foto(self) -> None:
+        """O painel da foto: uma faixa vertical à esquerda, com margem."""
+        margem = tema.px(26)
+        largura = round(self._largura * FATIA_DA_FOTO)
+        altura = self._altura - margem * 2
+        self._area_foto = (margem, margem, max(1, largura), max(1, altura))
 
     def _carregar_fotos(self) -> None:
         """Abre, recorta e tinge as fotos — fora da thread da interface.
@@ -125,7 +141,7 @@ class TelaInicio(tk.Frame):
         Redimensionar meia dúzia de imagens grandes leva alguns segundos numa
         máquina modesta, e a tela precisa aparecer antes disso.
         """
-        largura, altura = self._largura, self._altura
+        _, _, largura, altura = self._area_foto
         arquivos = sorted(
             caminho for caminho in PASTA_FOTOS.glob("*")
             if caminho.suffix.lower() in EXTENSOES
@@ -140,7 +156,7 @@ class TelaInicio(tk.Frame):
                 # Uma foto ruim na pasta não pode impedir o totem de abrir.
                 print(f"Ignorando {caminho.name}: {erro}")
 
-        if not preparadas or (largura, altura) != (self._largura, self._altura):
+        if not preparadas or (largura, altura) != self._area_foto[2:]:
             return
 
         self._fotos = preparadas
@@ -213,8 +229,9 @@ class TelaInicio(tk.Frame):
         # A referência precisa ficar viva: o Tk não segura o PhotoImage, e sem
         # isto a imagem some assim que o coletor de lixo passa.
         self._quadro_atual = ImageTk.PhotoImage(imagem)
+        x, y, _, _ = self._area_foto
         self._tela.delete("fundo")
-        self._tela.create_image(0, 0, image=self._quadro_atual, anchor="nw", tags="fundo")
+        self._tela.create_image(x, y, image=self._quadro_atual, anchor="nw", tags="fundo")
         self._tela.tag_lower("fundo")
         self._desenhar_conteudo()
 
@@ -247,13 +264,12 @@ class TelaInicio(tk.Frame):
     # Conteúdo por cima do fundo
     # -----------------------------------------------------------------------
     def _desenhar_conteudo(self) -> None:
-        """Desenha o bloco central, centrado verticalmente.
+        """Duas colunas: a foto de um lado, o que se lê do outro.
 
-        A altura é somada antes de desenhar qualquer coisa, e o bloco inteiro é
-        centralizado a partir dela. Ancorar cada peça numa fração fixa da tela
-        parece funcionar até o conteúdo mudar de tamanho — sem cardápio, ou com
-        um cardápio que quebra em duas linhas, a composição abre um buraco no
-        meio. Somando primeiro, o espaçamento se mantém em qualquer caso.
+        A foto num painel próprio, em vez de fundo da tela inteira, muda mais
+        do que a aparência. Ela deixa de ser pano de fundo atrás do texto e
+        passa a ser conteúdo — dá para mostrar o refeitório de verdade sem
+        precisar escurecer a imagem até sobrar só uma mancha azul.
         """
         self._tela.delete("conteudo")
 
@@ -262,96 +278,106 @@ class TelaInicio(tk.Frame):
         if largura <= 1 or altura <= 1:
             return
 
-        meio = largura // 2
-        largura_texto = largura - tema.px(220)
+        x_foto, y_foto, largura_foto, altura_foto = self._area_foto
+
+        # Sem Pillow ou sem fotos na pasta, o painel vira um bloco azul sólido.
+        # Deixar o espaço vazio abriria um buraco branco no meio da composição.
+        if not self._fotos:
+            self._tela.create_rectangle(
+                x_foto, y_foto, x_foto + largura_foto, y_foto + altura_foto,
+                fill=tema.COR_PRIMARIA, outline="", tags="conteudo",
+            )
+
+        self._desenhar_pontos(x_foto + largura_foto / 2, y_foto + altura_foto - tema.px(26))
+        self._desenhar_coluna_de_texto(x_foto + largura_foto, largura, altura)
+
+    def _desenhar_coluna_de_texto(self, fim_da_foto: int, largura: int, altura: int) -> None:
+        inicio = fim_da_foto + tema.px(40)
+        largura_util = largura - inicio - tema.px(40)
+        meio = inicio + largura_util / 2
+
         tem_cardapio = bool(self._cardapio)
+        linhas_cardapio = 2 if tem_cardapio and len(self._cardapio) > 34 else 1
 
-        # Duas linhas de cardápio cabem no espaço de uma e meia; acima disso a
-        # fonte é grande o bastante para o texto ocupar o dobro.
-        linhas_cardapio = 2 if tem_cardapio and len(self._cardapio) > 42 else 1
-
-        alturas = [
-            tema.px(78),                                     # nome
-            tema.px(34),                                     # subtítulo
-            tema.px(30),                                     # régua âmbar
-        ]
+        # O bloco de texto é centralizado na metade de cima; o botão fica na de
+        # baixo. Somar as alturas antes de desenhar mantém o espaçamento certo
+        # quando o cardápio some ou quebra em duas linhas.
+        alturas = [tema.px(74), tema.px(32), tema.px(28)]
         if tem_cardapio:
-            alturas += [tema.px(46), tema.px(40) * linhas_cardapio]
-        alturas += [tema.px(58), tema.px(74)]                 # respiro + botão
+            alturas += [tema.px(44), tema.px(38) * linhas_cardapio]
 
-        y = (altura - sum(alturas)) / 2 + tema.px(30)
+        y = altura * 0.30 - sum(alturas) / 2
 
         self._tela.create_text(
-            meio, y, text="SIARRN", fill=tema.COR_TEXTO_CLARO,
+            meio, y, text="SIARRN", fill=tema.COR_PRIMARIA,
             font=tema.fonte(tema.TAM_INICIO_NOME, forte=True), tags="conteudo",
         )
-        y += tema.px(62)
+        y += tema.px(60)
 
         self._tela.create_text(
             meio, y, text="Sistema Integrado de Almoço e Refeição",
-            fill=tema.COR_PRIMARIA_SUAVE,
+            fill=tema.COR_TEXTO_SUAVE, width=largura_util, justify="center",
             font=tema.fonte(tema.TAM_INICIO_SUB), tags="conteudo",
         )
         y += tema.px(26)
 
         self._tela.create_rectangle(
-            meio - tema.px(60), y, meio + tema.px(60), y + tema.px(5),
+            meio - tema.px(58), y, meio + tema.px(58), y + tema.px(5),
             fill=tema.COR_DESTAQUE, outline="", tags="conteudo",
         )
-        y += tema.px(50)
+        y += tema.px(48)
 
         if tem_cardapio:
+            # O rótulo vai em azul, não no âmbar da marca: âmbar sobre fundo
+            # claro não alcança contraste de leitura. O âmbar fica onde é só
+            # forma — a régua acima.
             self._tela.create_text(
-                meio, y, text="HOJE NO ALMOÇO", fill=tema.COR_DESTAQUE,
+                meio, y, text="HOJE NO ALMOÇO", fill=tema.COR_PRIMARIA,
                 font=tema.fonte(tema.TAM_INICIO_CARDAPIO_ROTULO, forte=True), tags="conteudo",
             )
-            y += tema.px(40)
+            y += tema.px(38)
             self._tela.create_text(
-                meio, y, text=self._cardapio, fill=tema.COR_TEXTO_CLARO,
-                font=tema.fonte(tema.TAM_INICIO_CARDAPIO), width=largura_texto,
+                meio, y, text=self._cardapio, fill=tema.COR_TEXTO,
+                font=tema.fonte(tema.TAM_INICIO_CARDAPIO), width=largura_util,
                 justify="center", tags="conteudo",
             )
-            y += tema.px(34) * linhas_cardapio
 
-        y += tema.px(56)
-        self._desenhar_chamada(meio, y, largura)
-        self._desenhar_pontos(meio, altura - tema.px(44))
+        self._desenhar_botao(meio, altura * 0.74, largura_util, altura)
 
-    def _desenhar_chamada(self, meio: int, y: float, largura: int) -> None:
-        """O convite para tocar.
+    def _desenhar_botao(self, x: float, y: float, largura_util: float, altura: int) -> None:
+        """O botão redondo.
 
-        Desenhado como retângulo no próprio Canvas, e não como botão de verdade,
-        porque o alvo real é a tela inteira — numa fila, ninguém deveria precisar
-        acertar um retângulo. Ele existe para dizer o que fazer, não para ser o
-        único lugar clicável.
+        Ele diz o que fazer, mas não é o único lugar clicável: a tela inteira
+        responde ao toque. Numa fila de cem adolescentes, ninguém deveria
+        precisar acertar um alvo.
         """
-        metade = min(largura // 2 - tema.px(40), tema.px(290))
-        meia_altura = tema.px(33)
+        raio = min(largura_util * 0.24, altura * 0.17, tema.px(120))
 
-        self._tela.create_rectangle(
-            meio - metade, y - meia_altura, meio + metade, y + meia_altura,
+        self._tela.create_oval(
+            x - raio, y - raio, x + raio, y + raio,
             fill=tema.COR_SUCESSO, outline="", tags="conteudo",
         )
         self._tela.create_text(
-            meio, y, text="Toque para registrar seu almoço", fill=tema.COR_TEXTO_CLARO,
-            font=tema.fonte(tema.TAM_INICIO_CHAMADA, forte=True), tags="conteudo",
+            x, y, text="TOQUE\nPARA\nCOMEÇAR", fill=tema.COR_TEXTO_CLARO,
+            font=tema.fonte(tema.TAM_INICIO_CHAMADA, forte=True),
+            justify="center", width=raio * 1.5, tags="conteudo",
         )
 
-    def _desenhar_pontos(self, meio: int, y: float) -> None:
-        """Indicador de quantas fotos existem e em qual delas estamos."""
+    def _desenhar_pontos(self, x: float, y: float) -> None:
+        """Quantas fotos existem e em qual delas estamos, na base do painel."""
         if len(self._fotos) < 2:
             return
 
         raio = tema.px(5)
         espaco = tema.px(20)
-        inicio = meio - (len(self._fotos) - 1) * espaco / 2
+        inicio = x - (len(self._fotos) - 1) * espaco / 2
 
         for indice in range(len(self._fotos)):
-            x = inicio + indice * espaco
+            centro = inicio + indice * espaco
             atual = indice == self._indice
             self._tela.create_oval(
-                x - raio, y - raio, x + raio, y + raio,
-                fill=tema.COR_DESTAQUE if atual else tema.COR_PRIMARIA_SUAVE,
+                centro - raio, y - raio, centro + raio, y + raio,
+                fill=tema.COR_DESTAQUE if atual else tema.COR_TEXTO_CLARO,
                 outline="", tags="conteudo",
             )
 

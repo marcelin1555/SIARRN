@@ -10,11 +10,11 @@ Primeira versão que roda de ponta a ponta. Já dá para instalar numa máquina,
 
 ### O totem tem uma tela de apresentação
 
-Quando ninguém está usando, o totem mostra o nome do sistema, fotos do refeitório passando devagar e — em letras grandes — **o cardápio do dia**. Dá para saber o que tem no almoço do outro lado do refeitório, sem encostar em nada.
+Quando ninguém está usando, o totem mostra as fotos do refeitório num painel à esquerda e, à direita, o nome do sistema com **o cardápio do dia** em letras grandes. Dá para saber o que tem no almoço do outro lado do refeitório, sem encostar em nada.
 
-Um toque em qualquer lugar da tela leva à busca. Depois de um tempo parado, ele volta sozinho para a apresentação.
+Um toque em qualquer lugar da tela leva à busca — não é preciso acertar o botão redondo. Depois de um tempo parado, o totem volta sozinho para a apresentação.
 
-As fotos ficam em `assets/fotos/`: é só colocar os arquivos na pasta. O sistema escurece as imagens automaticamente para o texto continuar legível, então não é preciso editar nada antes. Sem fotos, a tela funciona igual com o fundo azul da escola.
+As fotos ficam em `assets/fotos/`: é só colocar os arquivos na pasta, sem precisar editar nada antes. Sem fotos, o painel fica no azul da escola e todo o resto continua igual.
 
 ### A cozinha passa a saber quantos pratos preparar
 
