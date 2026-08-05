@@ -30,7 +30,7 @@ from . import ui_tema as tema
 from .cliente_api import ErroDeRede
 
 try:
-    from PIL import Image, ImageTk
+    from PIL import Image, ImageDraw, ImageTk
     PILLOW_DISPONIVEL = True
 except ImportError:  # pragma: no cover - depende do ambiente
     PILLOW_DISPONIVEL = False
@@ -63,6 +63,9 @@ FORCA_DO_TINGIMENTO = 0.18
 # Quanto da largura o painel da foto ocupa.
 FATIA_DA_FOTO = 0.40
 
+# Arredondamento dos cantos do painel da foto e do botão.
+RAIO_CANTO = 26
+
 
 class TelaInicio(tk.Frame):
     def __init__(self, master, cliente, ao_entrar) -> None:
@@ -81,15 +84,18 @@ class TelaInicio(tk.Frame):
         self._altura = 0
 
         self._area_foto = (0, 0, 0, 0)   # x, y, largura, altura do painel da foto
+        self._fundo = None               # ImageTk do fundo institucional
 
         self._tela = tk.Canvas(
-            self, bg=tema.COR_FUNDO, highlightthickness=0, cursor="hand2"
+            self, bg=tema.COR_PRIMARIA, highlightthickness=0, cursor="hand2"
         )
         self._tela.pack(fill="both", expand=True)
 
         self._tela.bind("<Configure>", self._ao_redimensionar)
-        for evento in ("<Button-1>", "<Key>"):
-            self._tela.bind(evento, self._entrar)
+        # Só o toque entra. Teclas não: num refeitório o teclado fica exposto, e
+        # qualquer encostão pularia a apresentação — inclusive eventos residuais
+        # de quem acabou de iniciar o programa pelo terminal.
+        self._tela.bind("<Button-1>", self._entrar)
         self.bind("<Button-1>", self._entrar)
 
     # -----------------------------------------------------------------------
@@ -136,11 +142,16 @@ class TelaInicio(tk.Frame):
         self._area_foto = (margem, margem, max(1, largura), max(1, altura))
 
     def _carregar_fotos(self) -> None:
-        """Abre, recorta e tinge as fotos — fora da thread da interface.
+        """Monta o fundo institucional e prepara as fotos — fora da interface.
 
-        Redimensionar meia dúzia de imagens grandes leva alguns segundos numa
-        máquina modesta, e a tela precisa aparecer antes disso.
+        Gerar o fundo e redimensionar meia dúzia de imagens grandes leva alguns
+        segundos numa máquina modesta, e a tela precisa aparecer antes disso.
         """
+        largura_tela, altura_tela = self._largura, self._altura
+        fundo = self._gerar_fundo(largura_tela, altura_tela)
+        if (largura_tela, altura_tela) == (self._largura, self._altura):
+            self.after(0, lambda: self._aplicar_fundo(fundo))
+
         _, _, largura, altura = self._area_foto
         arquivos = sorted(
             caminho for caminho in PASTA_FOTOS.glob("*")
@@ -163,8 +174,63 @@ class TelaInicio(tk.Frame):
         self.after(0, self._comecar_rotacao)
 
     @staticmethod
+    def _gerar_fundo(largura: int, altura: int):
+        """O fundo da tela: degradê azul com faixas diagonais largas.
+
+        Desenhado aqui em vez de carregado de um arquivo porque precisa se
+        ajustar a qualquer resolução sem esticar nem cortar — a escola ainda não
+        definiu o equipamento. É a mesma linguagem das faixas sólidas do SIGBEF.
+        """
+        de, para = _rgb("#12314F"), _rgb(tema.COR_PRIMARIA)
+        imagem = Image.new("RGB", (largura, altura), de)
+        desenho = ImageDraw.Draw(imagem)
+
+        # Linha a linha: são algumas centenas de operações em vez de milhões.
+        for y in range(altura):
+            proporcao = y / max(1, altura)
+            desenho.line(
+                [(0, y), (largura, y)],
+                fill=tuple(round(de[i] + (para[i] - de[i]) * proporcao) for i in range(3)),
+            )
+
+        faixas = Image.new("RGBA", (largura, altura), (0, 0, 0, 0))
+        pincel = ImageDraw.Draw(faixas)
+        passo = max(160, largura // 7)
+        for indice in range(-2, largura // passo + 3):
+            base = indice * passo
+            pincel.polygon(
+                [
+                    (base, altura),
+                    (base + passo * 0.5, altura),
+                    (base + passo * 0.5 + altura * 0.55, 0),
+                    (base + altura * 0.55, 0),
+                ],
+                fill=(46, 117, 182, 30),
+            )
+
+        return Image.alpha_composite(imagem.convert("RGBA"), faixas).convert("RGB")
+
+    def _aplicar_fundo(self, imagem) -> None:
+        self._fundo = ImageTk.PhotoImage(imagem)
+        self._tela.delete("papel")
+        self._tela.create_image(0, 0, image=self._fundo, anchor="nw", tags="papel")
+        self._ordenar_camadas()
+        self._desenhar_conteudo()
+
+    def _ordenar_camadas(self) -> None:
+        """Empilha o desenho: papel embaixo, foto no meio, texto por cima.
+
+        A ordem precisa ser imposta toda vez que uma camada é recriada. Cada
+        `tag_lower` manda o item para o fim da pilha, então dois deles em
+        sequência invertem a ordem entre si — foi assim que a foto acabou
+        escondida atrás do fundo.
+        """
+        self._tela.tag_lower("fundo")
+        self._tela.tag_lower("papel")
+
+    @staticmethod
     def _ajustar(original, largura: int, altura: int):
-        """Recorta a foto para preencher a tela e a puxa para o azul da escola."""
+        """Recorta a foto para o painel e arredonda os cantos."""
         imagem = original.convert("RGB")
 
         proporcao = max(largura / imagem.width, altura / imagem.height)
@@ -176,7 +242,9 @@ class TelaInicio(tk.Frame):
         imagem = imagem.crop((esquerda, topo, esquerda + largura, topo + altura))
 
         tingimento = Image.new("RGB", imagem.size, _rgb(tema.COR_PRIMARIA))
-        return Image.blend(imagem, tingimento, FORCA_DO_TINGIMENTO)
+        imagem = Image.blend(imagem, tingimento, FORCA_DO_TINGIMENTO)
+
+        return _arredondar(imagem, tema.px(RAIO_CANTO), borda=tema.px(3))
 
     def _comecar_rotacao(self) -> None:
         if not self._fotos:
@@ -232,7 +300,7 @@ class TelaInicio(tk.Frame):
         x, y, _, _ = self._area_foto
         self._tela.delete("fundo")
         self._tela.create_image(x, y, image=self._quadro_atual, anchor="nw", tags="fundo")
-        self._tela.tag_lower("fundo")
+        self._ordenar_camadas()
         self._desenhar_conteudo()
 
     # -----------------------------------------------------------------------
@@ -280,12 +348,12 @@ class TelaInicio(tk.Frame):
 
         x_foto, y_foto, largura_foto, altura_foto = self._area_foto
 
-        # Sem Pillow ou sem fotos na pasta, o painel vira um bloco azul sólido.
-        # Deixar o espaço vazio abriria um buraco branco no meio da composição.
+        # Sem Pillow ou sem fotos na pasta, o painel vira um bloco sólido mais
+        # claro que o fundo — o suficiente para a composição continuar de pé.
         if not self._fotos:
-            self._tela.create_rectangle(
-                x_foto, y_foto, x_foto + largura_foto, y_foto + altura_foto,
-                fill=tema.COR_PRIMARIA, outline="", tags="conteudo",
+            _bloco_arredondado(
+                self._tela, x_foto, y_foto, x_foto + largura_foto, y_foto + altura_foto,
+                tema.px(RAIO_CANTO), tema.COR_SECUNDARIA, "conteudo",
             )
 
         self._desenhar_pontos(x_foto + largura_foto / 2, y_foto + altura_foto - tema.px(26))
@@ -309,14 +377,14 @@ class TelaInicio(tk.Frame):
         y = altura * 0.30 - sum(alturas) / 2
 
         self._tela.create_text(
-            meio, y, text="SIARRN", fill=tema.COR_PRIMARIA,
+            meio, y, text="SIARRN", fill=tema.COR_TEXTO_CLARO,
             font=tema.fonte(tema.TAM_INICIO_NOME, forte=True), tags="conteudo",
         )
         y += tema.px(60)
 
         self._tela.create_text(
             meio, y, text="Sistema Integrado de Almoço e Refeição",
-            fill=tema.COR_TEXTO_SUAVE, width=largura_util, justify="center",
+            fill=tema.COR_PRIMARIA_SUAVE, width=largura_util, justify="center",
             font=tema.fonte(tema.TAM_INICIO_SUB), tags="conteudo",
         )
         y += tema.px(26)
@@ -328,39 +396,39 @@ class TelaInicio(tk.Frame):
         y += tema.px(48)
 
         if tem_cardapio:
-            # O rótulo vai em azul, não no âmbar da marca: âmbar sobre fundo
-            # claro não alcança contraste de leitura. O âmbar fica onde é só
-            # forma — a régua acima.
+            # Sobre o fundo escuro o âmbar volta a ter contraste de leitura, e
+            # pode carregar o rótulo em vez de ficar só na régua.
             self._tela.create_text(
-                meio, y, text="HOJE NO ALMOÇO", fill=tema.COR_PRIMARIA,
+                meio, y, text="HOJE NO ALMOÇO", fill=tema.COR_DESTAQUE,
                 font=tema.fonte(tema.TAM_INICIO_CARDAPIO_ROTULO, forte=True), tags="conteudo",
             )
             y += tema.px(38)
             self._tela.create_text(
-                meio, y, text=self._cardapio, fill=tema.COR_TEXTO,
+                meio, y, text=self._cardapio, fill=tema.COR_TEXTO_CLARO,
                 font=tema.fonte(tema.TAM_INICIO_CARDAPIO), width=largura_util,
                 justify="center", tags="conteudo",
             )
 
-        self._desenhar_botao(meio, altura * 0.74, largura_util, altura)
+        self._desenhar_botao(meio, altura * 0.74, largura_util)
 
-    def _desenhar_botao(self, x: float, y: float, largura_util: float, altura: int) -> None:
-        """O botão redondo.
+    def _desenhar_botao(self, x: float, y: float, largura_util: float) -> None:
+        """O botão, como retângulo de cantos arredondados.
 
         Ele diz o que fazer, mas não é o único lugar clicável: a tela inteira
         responde ao toque. Numa fila de cem adolescentes, ninguém deveria
         precisar acertar um alvo.
         """
-        raio = min(largura_util * 0.24, altura * 0.17, tema.px(120))
+        metade = min(largura_util * 0.42, tema.px(250))
+        meia_altura = tema.px(46)
 
-        self._tela.create_oval(
-            x - raio, y - raio, x + raio, y + raio,
-            fill=tema.COR_SUCESSO, outline="", tags="conteudo",
+        _bloco_arredondado(
+            self._tela, x - metade, y - meia_altura, x + metade, y + meia_altura,
+            tema.px(RAIO_CANTO), tema.COR_SUCESSO, "conteudo",
         )
         self._tela.create_text(
-            x, y, text="TOQUE\nPARA\nCOMEÇAR", fill=tema.COR_TEXTO_CLARO,
+            x, y, text="TOQUE PARA COMEÇAR", fill=tema.COR_TEXTO_CLARO,
             font=tema.fonte(tema.TAM_INICIO_CHAMADA, forte=True),
-            justify="center", width=raio * 1.5, tags="conteudo",
+            justify="center", tags="conteudo",
         )
 
     def _desenhar_pontos(self, x: float, y: float) -> None:
@@ -385,3 +453,42 @@ class TelaInicio(tk.Frame):
 def _rgb(cor_hex: str) -> tuple[int, int, int]:
     cor_hex = cor_hex.lstrip("#")
     return tuple(int(cor_hex[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _arredondar(imagem, raio: int, borda: int = 0):
+    """Arredonda os cantos e contorna o painel.
+
+    A borda existe porque foto e fundo podem ficar parecidos demais — uma foto
+    de parede azulada do refeitório sumiria dentro do azul da tela. O contorno
+    âmbar garante que o painel se leia como um objeto sobre o fundo, em qualquer
+    imagem que a escola coloque na pasta.
+    """
+    recortada = imagem.convert("RGBA")
+
+    mascara = Image.new("L", imagem.size, 0)
+    ImageDraw.Draw(mascara).rounded_rectangle(
+        [0, 0, imagem.width - 1, imagem.height - 1], radius=raio, fill=255
+    )
+    recortada.putalpha(mascara)
+
+    if borda > 0:
+        ImageDraw.Draw(recortada).rounded_rectangle(
+            [borda // 2, borda // 2, imagem.width - 1 - borda // 2, imagem.height - 1 - borda // 2],
+            radius=raio, outline=(*_rgb(tema.COR_DESTAQUE), 235), width=borda,
+        )
+    return recortada
+
+
+def _bloco_arredondado(tela, x1, y1, x2, y2, raio, cor, tags) -> None:
+    """Retângulo de cantos arredondados no Canvas.
+
+    O Tk não tem essa primitiva. Composto de dois retângulos cruzados mais um
+    círculo em cada canto — o resultado tem cantos exatos, ao contrário do
+    `create_polygon` com `smooth`, que aproxima por spline e deforma quando o
+    raio é grande em relação ao lado.
+    """
+    diametro = raio * 2
+    tela.create_rectangle(x1 + raio, y1, x2 - raio, y2, fill=cor, outline="", tags=tags)
+    tela.create_rectangle(x1, y1 + raio, x2, y2 - raio, fill=cor, outline="", tags=tags)
+    for cx, cy in ((x1, y1), (x2 - diametro, y1), (x1, y2 - diametro), (x2 - diametro, y2 - diametro)):
+        tela.create_oval(cx, cy, cx + diametro, cy + diametro, fill=cor, outline="", tags=tags)
