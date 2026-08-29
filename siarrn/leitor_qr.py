@@ -8,8 +8,8 @@ nome. Com cem pessoas na fila, essa diferença é a fila inteira andando.
 A regra que governa este módulo: **a câmera é um atalho, nunca um requisito.**
 Se ela não existir, falhar ao abrir, cair no meio do almoço ou simplesmente não
 enxergar o cartão amassado de alguém, nada trava — a busca por nome continua na
-tela o tempo todo. Por isso nenhum erro aqui é propagado: são registrados no
-console e o leitor se marca como indisponível.
+tela o tempo todo. Por isso nenhum erro aqui é propagado: vão para o arquivo
+de registro e o leitor se marca como indisponível.
 
 Decisões vindas de medição
 --------------------------
@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import threading
 import time
+
+from . import log
 
 try:
     import cv2
@@ -154,7 +156,7 @@ class LeitorQR:
             if self._camera is None and not self._abrir():
                 # Sem câmera o totem segue normal, com busca por nome. Tenta de
                 # novo mais tarde, caso alguém a conecte durante o almoço.
-                print(f"Leitor de QR indisponível: {self.motivo_indisponivel}")
+                log.aviso(f"Leitor de QR indisponível: {self.motivo_indisponivel}")
                 if self._parar.wait(SEGUNDOS_ENTRE_TENTATIVAS):
                     return
                 continue
@@ -162,7 +164,7 @@ class LeitorQR:
             try:
                 capturou, quadro = self._camera.read()
             except cv2.error as erro:
-                print(f"Falha ao ler da câmera: {erro}")
+                log.aviso(f"Falha ao ler da câmera: {erro}")
                 self._liberar()
                 continue
 
@@ -192,7 +194,7 @@ class LeitorQR:
         except Exception as erro:  # noqa: BLE001
             # Um erro no tratamento não pode matar a thread da câmera: ela
             # pararia de ler em silêncio pelo resto do almoço.
-            print(f"Erro ao tratar o código lido: {erro}")
+            log.aviso(f"Erro ao tratar o código lido: {erro}")
 
     def esquecer_ultimo(self) -> None:
         """Permite reler o mesmo código imediatamente.

@@ -9,8 +9,26 @@ A mesma pasta guarda a cópia local dos alunos e a fila de almoços pendentes.
 """
 from __future__ import annotations
 
+from . import log
+
 import json
+import sys
 from pathlib import Path
+
+
+def pasta_do_programa() -> Path:
+    """Onde ficam os arquivos que a escola pode trocar — hoje, as fotos.
+
+    Empacotado, `__file__` aponta para dentro de uma pasta temporária que o
+    PyInstaller descompacta a cada execução: qualquer coisa gravada ali some, e
+    o que está ali dentro não pode ser editado por quem usa. As fotos precisam
+    ficar **ao lado do executável**, senão trocá-las exigiria recompilar o
+    programa — e a escola não vai recompilar nada.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent.parent
+
 
 PASTA = Path.home() / ".siarrn"
 ARQUIVO = PASTA / "totem.json"
@@ -30,7 +48,7 @@ class Config:
         try:
             self._valores = json.loads(ARQUIVO.read_text(encoding="utf-8"))
         except (OSError, ValueError) as erro:
-            print(f"Configuração ilegível, usando os padrões: {erro}")
+            log.aviso(f"Configuração ilegível, usando os padrões: {erro}")
 
     def salvar(self) -> None:
         try:
@@ -40,7 +58,7 @@ class Config:
                 encoding="utf-8",
             )
         except OSError as erro:
-            print(f"Não foi possível salvar a configuração: {erro}")
+            log.aviso(f"Não foi possível salvar a configuração: {erro}")
 
     # -- servidor ----------------------------------------------------------
     @property

@@ -19,8 +19,8 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-from . import config_totem
-from .cliente_api import ErroDeRede
+from . import config_totem, log
+from .cliente_api import AlunoDesconhecido, ErroDeRede
 
 
 def agora() -> str:
@@ -43,8 +43,8 @@ class FilaOffline:
                     arquivo.write(json.dumps(item, ensure_ascii=False) + "\n")
             except OSError as erro:
                 # Não há para onde escalar: a pessoa já está com o prato na mão.
-                # Registrar no console é tudo o que dá pra fazer sem parar a fila.
-                print(f"FALHA AO GRAVAR NA FILA LOCAL: {erro}")
+                # Anotar no registro é tudo o que dá pra fazer sem parar a fila.
+                log.aviso(f"FALHA AO GRAVAR NA FILA LOCAL: {erro}")
 
     def registrar(self, aluno: dict, origem: str = "nome") -> None:
         """Registra o almoço de um aluno que já existe na base."""
@@ -88,9 +88,9 @@ class FilaOffline:
                     except ValueError:
                         # Linha truncada por queda de energia. Descartar uma é
                         # melhor que travar a sincronização de todas as outras.
-                        print("Linha ilegível na fila, descartada.")
+                        log.aviso("Linha ilegível na fila, descartada.")
         except OSError as erro:
-            print(f"Não foi possível ler a fila local: {erro}")
+            log.aviso(f"Não foi possível ler a fila local: {erro}")
         return itens
 
     def pendentes(self) -> int:
@@ -107,7 +107,7 @@ class FilaOffline:
             temporario.write_text(conteudo, encoding="utf-8")
             os.replace(temporario, self._arquivo)
         except OSError as erro:
-            print(f"Não foi possível reescrever a fila: {erro}")
+            log.aviso(f"Não foi possível reescrever a fila: {erro}")
 
     # -----------------------------------------------------------------------
     # Sincronização
@@ -127,6 +127,7 @@ class FilaOffline:
 
             restantes: list[dict] = []
             enviados = 0
+            descartados = 0
 
             for item in itens:
                 try:
@@ -144,8 +145,22 @@ class FilaOffline:
                         item.get("origem") or "nome",
                     )
                     enviados += 1
+                except AlunoDesconhecido as erro:
+                    # Insistir não resolve, e guardar para sempre entope a fila
+                    # e atrasa todos os dias seguintes. Sai da fila, mas deixa
+                    # rastro no registro: é uma inconsistência entre o totem e o
+                    # servidor, e alguém precisa poder descobrir isso depois.
+                    log.erro(f"almoço descartado — {erro}: {item}")
+                    descartados += 1
                 except (ErroDeRede, KeyError):
                     restantes.append(item)
+
+            if descartados:
+                log.erro(
+                    f"{descartados} almoços não puderam ser enviados: o servidor "
+                    "não conhece esses alunos. Confira se o totem aponta para o "
+                    "servidor certo."
+                )
 
             self._reescrever(restantes)
             return enviados

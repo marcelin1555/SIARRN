@@ -81,6 +81,22 @@ Antes de a fila se formar, dá para checar se aquela máquina enxerga o servidor
 python totem.py --verificar --servidor=http://192.168.0.10:8770
 ```
 
+### Gerando os executáveis
+
+Para instalar na escola sem depender de Python:
+
+```bash
+python build.py
+```
+
+Produz `dist/SIARRN-Servidor/` e `dist/SIARRN-Totem/` — duas pastas independentes, para copiar em pendrive. São separadas de propósito: a máquina do refeitório não carrega o servidor, e a do servidor não carrega as bibliotecas de câmera e imagem (21 MB contra 152 MB).
+
+As fotos ficam **fora** do executável, em `dist/SIARRN-Totem/assets/fotos`, para a escola poder trocá-las sem recompilar nada.
+
+### Onde ver o que aconteceu
+
+`~/.siarrn/servidor.log` e `~/.siarrn/totem.log`, com rotação automática. É onde procurar quando algo der errado durante o almoço — o totem fica sozinho no refeitório e ninguém está olhando um terminal.
+
 ### Testes
 
 ```bash

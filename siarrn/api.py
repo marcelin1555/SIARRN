@@ -25,7 +25,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
-from . import alunos, dados, previsao, refeicoes
+from . import alunos, dados, log, previsao, refeicoes
 
 PORTA_PADRAO = 8770
 
@@ -84,8 +84,15 @@ class Handler(BaseHTTPRequestHandler):
 
     # -- infraestrutura ----------------------------------------------------
     def log_message(self, formato: str, *args) -> None:  # noqa: A002
-        """Log enxuto: numa demonstração, o console é visível para todo mundo."""
-        print(f"  {self.command} {self.path} → {args[1] if len(args) > 1 else ''}")
+        """Registra a requisição — e nunca deixa o registro derrubar o servidor.
+
+        Aqui havia um `print` direto. Quando a saída padrão ficava indisponível
+        (executável sem console, redirecionamento fechado), ele levantava
+        exceção, a thread que atendia a requisição morria, e a conexão fechava
+        sem resposta: o servidor continuava escutando na porta sem responder
+        nada. `log.info` engole qualquer falha de escrita justamente por isso.
+        """
+        log.info(f"{self.command} {self.path} -> {args[1] if len(args) > 1 else ''}")
 
     def _responder(self, status: int, payload) -> None:
         corpo = json.dumps(payload, ensure_ascii=False).encode("utf-8")

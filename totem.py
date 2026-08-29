@@ -15,10 +15,11 @@ não é luxo: é o que permite o sistema existir antes de a direção liberar al
 from __future__ import annotations
 
 import argparse
+import sys
 import threading
 import tkinter as tk
 
-from siarrn import ui_dialogos, ui_tema as tema
+from siarrn import log, ui_dialogos, ui_tema as tema
 from siarrn.base_local import BaseLocal
 from siarrn.cliente_api import ClienteApi
 from siarrn.config_totem import Config
@@ -41,11 +42,14 @@ SEGUNDOS_BASE = 3600
 # inteiro exibindo um campo de busca vazio, em vez do cardápio do dia.
 MILISSEGUNDOS_INATIVIDADE = 45_000
 
+QUEBRA = chr(10)
+
 
 class AplicacaoTotem:
     def __init__(self, argumentos: argparse.Namespace) -> None:
         self._argumentos = argumentos
 
+        log.configurar("totem")
         self.config = Config()
         if argumentos.servidor:
             self.config.servidor = argumentos.servidor
@@ -280,6 +284,21 @@ def verificar(argumentos: argparse.Namespace) -> int:
     """
     import time
 
+    linhas: list[str] = []
+
+    sem_saida = sys.stdout is None
+
+    def anotar(texto: str = "") -> None:
+        """Guarda a linha e também imprime, quando houver para onde imprimir."""
+        nonlocal sem_saida
+        linhas.append(texto)
+        try:
+            print(texto)
+        except (OSError, ValueError, AttributeError):
+            # Compilado sem console e sem redirecionamento, não há saída.
+            sem_saida = True
+
+    log.configurar("totem")
     config = Config()
     if argumentos.servidor:
         config.servidor = argumentos.servidor
@@ -288,32 +307,32 @@ def verificar(argumentos: argparse.Namespace) -> int:
     base = BaseLocal()
     fila = FilaOffline()
 
-    print("SIARRN — verificação do totem")
-    print(f"  servidor configurado: {config.servidor}")
+    anotar("SIARRN — verificação do totem")
+    anotar(f"  servidor configurado: {config.servidor}")
 
     no_ar = cliente.no_ar()
-    print(f"  servidor no ar:       {'sim' if no_ar else 'NÃO'}")
+    anotar(f"  servidor no ar:       {'sim' if no_ar else 'NÃO'}")
 
     if no_ar:
-        print(f"  base atualizada:      {'sim' if base.atualizar(cliente) else 'não'}")
+        anotar(f"  base atualizada:      {'sim' if base.atualizar(cliente) else 'não'}")
 
-    print(f"  alunos em disco:      {base.tamanho()}")
-    print(f"  fila pendente:        {fila.pendentes()}")
+    anotar(f"  alunos em disco:      {base.tamanho()}")
+    anotar(f"  fila pendente:        {fila.pendentes()}")
 
     if base.vazia():
-        print("\nSem base local e sem servidor: o totem não teria nomes para mostrar.")
-        print("Rode o servidor ao menos uma vez para o totem baixar a lista.")
+        anotar("\nSem base local e sem servidor: o totem não teria nomes para mostrar.")
+        anotar("Rode o servidor ao menos uma vez para o totem baixar a lista.")
         return 1
 
     # A busca não depende de rede: acontece toda em memória, sobre a cópia local.
     inicio = time.perf_counter()
     encontrados = base.buscar("sil")
     micros = (time.perf_counter() - inicio) * 1_000_000
-    print(f"  busca local por 'sil': {len(encontrados)} resultados em {micros:.0f} µs")
+    anotar(f"  busca local por 'sil': {len(encontrados)} resultados em {micros:.0f} µs")
 
     if argumentos.registrar:
         amostra = base.amostra(argumentos.registrar)
-        print(f"\nRegistrando {len(amostra)} almoços...")
+        anotar(f"\nRegistrando {len(amostra)} almoços...")
 
         inicio = time.perf_counter()
         for aluno in amostra:
@@ -322,19 +341,62 @@ def verificar(argumentos: argparse.Namespace) -> int:
 
         # O tempo medido aqui é o que a pessoa na fila sente. Se registrar cem
         # almoços demorar, nada mais no sistema importa.
-        print(f"  gravados em disco:    {total:.0f} ms "
+        anotar(f"  gravados em disco:    {total:.0f} ms "
               f"({total / max(1, len(amostra)):.1f} ms por aluno)")
-        print(f"  pendentes agora:      {fila.pendentes()}")
+        anotar(f"  pendentes agora:      {fila.pendentes()}")
 
     if fila.pendentes() and no_ar:
         inicio = time.perf_counter()
         enviados = fila.sincronizar(cliente, base)
-        print(f"\n  sincronizados:        {enviados} em "
+        anotar(f"\n  sincronizados:        {enviados} em "
               f"{(time.perf_counter() - inicio) * 1000:.0f} ms")
-        print(f"  restaram na fila:     {fila.pendentes()}")
+        anotar(f"  restaram na fila:     {fila.pendentes()}")
 
     cliente.fechar()
+    if sem_saida:
+        _mostrar_verificacao(linhas)
     return 0
+
+
+def _mostrar_verificacao(linhas: list[str]) -> None:
+    """Mostra o resultado numa janela quando não há console para lê-lo.
+
+    O totem é compilado sem console — é o certo para um programa que fica em
+    tela cheia na fila. Só que a verificação existe justamente para alguém da
+    escola conferir a instalação com um duplo clique, e nesse caso o texto não
+    teria para onde ir.
+
+    O gatilho é `sys.stdout` ser inutilizável, e não a ausência de terminal:
+    rodado com a saída redirecionada — de um script, de outro programa — o
+    texto chega ao seu destino, e abrir uma janela ali travaria quem chamou
+    esperando alguém clicar em Fechar.
+    """
+    import tkinter as tk
+
+    janela = tk.Tk()
+    janela.title("SIARRN — verificação")
+    tema.aplicar_tema(janela)
+
+    tk.Label(
+        janela, text="Verificação do totem", bg=tema.COR_PRIMARIA,
+        fg=tema.COR_TEXTO_CLARO, font=tema.fonte(17, forte=True),
+        anchor="w", padx=tema.px(20), pady=tema.px(14),
+    ).pack(fill="x")
+
+    tk.Label(
+        janela, text=QUEBRA.join(linhas), bg=tema.COR_CARD, fg=tema.COR_TEXTO,
+        font=("Consolas", 10), justify="left", anchor="w",
+        padx=tema.px(20), pady=tema.px(16),
+    ).pack(fill="both", expand=True)
+
+    tk.Button(
+        janela, text="Fechar", command=janela.destroy,
+        bg=tema.COR_SECUNDARIA, fg=tema.COR_TEXTO_CLARO,
+        font=tema.fonte(12, forte=True), relief="flat", borderwidth=0,
+        cursor="hand2", padx=tema.px(20), pady=tema.px(9),
+    ).pack(pady=(0, tema.px(16)))
+
+    janela.mainloop()
 
 
 def main(argv: list[str] | None = None) -> int:

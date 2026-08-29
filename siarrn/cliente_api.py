@@ -31,6 +31,16 @@ class ErroDeRede(Exception):
     """Falha ao falar com o servidor. Sempre recuperável: o totem segue offline."""
 
 
+class AlunoDesconhecido(ErroDeRede):
+    """O servidor não conhece esse aluno.
+
+    Diferente das demais falhas: reenviar não vai adiantar. Acontece quando a
+    cópia local do totem aponta para alunos que o servidor não tem — base
+    restaurada de um backup antigo, totem apontado para outro servidor, aluno
+    removido. Quem trata precisa saber que insistir é inútil.
+    """
+
+
 class ClienteApi:
     def __init__(self, config) -> None:
         self._config = config
@@ -149,11 +159,16 @@ class ClienteApi:
         envio: um almoço registrado offline às 11h47 e sincronizado às 12h30
         continua sendo das 11h47.
         """
-        self._requisitar("POST", "/api/consumo", {
+        # `_requisitar` devolve None em 404 sem levantar — o que serve para
+        # consultar um código que não existe, mas aqui significava dar por enviado um
+        # almoço que o servidor recusou. Cem consumos chegaram a sumir assim.
+        resposta = self._requisitar("POST", "/api/consumo", {
             "aluno_id": aluno_id,
             "registrado_em": registrado_em,
             "origem": origem,
         })
+        if resposta is None:
+            raise AlunoDesconhecido(f"o servidor não conhece o aluno {aluno_id}")
 
     def definir_cardapio(self, cardapio: str) -> None:
         """O que vai ser servido hoje. Só a cozinha sabe."""

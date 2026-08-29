@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from siarrn import __version__, api, dados
+from siarrn import __version__, api, dados, log
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -33,6 +33,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--versao", action="version", version=f"SIARRN {__version__}")
     args = parser.parse_args(argv)
 
+    log.configurar("servidor")
     dados.init_db()
 
     if args.seed:

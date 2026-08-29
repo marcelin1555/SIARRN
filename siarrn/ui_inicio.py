@@ -26,7 +26,7 @@ import time
 import tkinter as tk
 from pathlib import Path
 
-from . import ui_tema as tema
+from . import config_totem, log, ui_tema as tema
 from .cliente_api import ErroDeRede
 
 try:
@@ -35,7 +35,7 @@ try:
 except ImportError:  # pragma: no cover - depende do ambiente
     PILLOW_DISPONIVEL = False
 
-PASTA_FOTOS = Path(__file__).resolve().parent.parent / "assets" / "fotos"
+PASTA_FOTOS = config_totem.pasta_do_programa() / "assets" / "fotos"
 EXTENSOES = (".jpg", ".jpeg", ".png", ".webp")
 
 # Quanto tempo cada foto fica parada antes da próxima.
@@ -166,7 +166,7 @@ class TelaInicio(tk.Frame):
                     preparadas.append(self._ajustar(original, largura, altura))
             except Exception as erro:  # noqa: BLE001
                 # Uma foto ruim na pasta não pode impedir o totem de abrir.
-                print(f"Ignorando {caminho.name}: {erro}")
+                log.aviso(f"Ignorando {caminho.name}: {erro}")
 
         if not preparadas or (largura, altura) != self._area_foto[2:]:
             return

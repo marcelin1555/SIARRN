@@ -14,7 +14,7 @@ import os
 import threading
 from pathlib import Path
 
-from . import config_totem, texto
+from . import config_totem, log, texto
 from .cliente_api import ErroDeRede
 
 # Duas letras é o mínimo. Uma só traria meia escola para a tela.
@@ -41,7 +41,7 @@ class BaseLocal:
         try:
             lidos = json.loads(self._arquivo.read_text(encoding="utf-8"))
         except (OSError, ValueError) as erro:
-            print(f"Base local ilegível, seguindo vazia: {erro}")
+            log.aviso(f"Base local ilegível, seguindo vazia: {erro}")
             return
         if isinstance(lidos, list):
             with self._trava:
@@ -71,7 +71,7 @@ class BaseLocal:
             temporario.write_text(conteudo, encoding="utf-8")
             os.replace(temporario, self._arquivo)
         except OSError as erro:
-            print(f"Não foi possível salvar a base local: {erro}")
+            log.aviso(f"Não foi possível salvar a base local: {erro}")
 
     def atualizar(self, cliente) -> bool:
         """Rebaixa a lista do servidor.

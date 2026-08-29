@@ -8,6 +8,12 @@ Escrito para quem usa o sistema — direção, cozinha e alunos. Quem for mexer 
 
 Primeira versão que roda de ponta a ponta. Já dá para instalar numa máquina, ligar na fila do almoço e começar a medir.
 
+### Dá para instalar sem ter Python
+
+O sistema virou dois programas prontos, um do servidor e um do totem. Copie a pasta, dê um duplo clique, e funciona — não é preciso instalar nada antes.
+
+As fotos da tela de apresentação ficam numa pasta ao lado do programa, então trocá-las continua sendo copiar arquivos.
+
 ### Cartões com QR, impressos em papel comum
 
 Cada aluno tem um código próprio, e agora a cozinha consegue imprimir os cartões: no painel, o botão **Cartões dos alunos** gera uma folha pronta para recortar, com o QR, o nome e a turma de cada um. Dez por página, papel comum, sem impressora especial.

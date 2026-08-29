@@ -16,7 +16,7 @@ from pathlib import Path
 
 from siarrn import alunos, texto
 from siarrn.base_local import BaseLocal
-from siarrn.cliente_api import ErroDeRede
+from siarrn.cliente_api import AlunoDesconhecido, ErroDeRede
 from siarrn.fila_offline import FilaOffline
 
 from .base import ComBanco
@@ -25,8 +25,9 @@ from .base import ComBanco
 class ClienteFalso:
     """Servidor de mentira, que pode ser desligado no meio do teste."""
 
-    def __init__(self, no_ar: bool = True) -> None:
+    def __init__(self, no_ar: bool = True, conhece_alunos: bool = True) -> None:
         self.no_ar_flag = no_ar
+        self.conhece_alunos = conhece_alunos
         self.consumos: list[tuple] = []
         self.cadastrados: list[str] = []
         self._proximo_id = 900
@@ -43,6 +44,8 @@ class ClienteFalso:
 
     def registrar_consumo(self, aluno_id: int, registrado_em: str, origem: str = "nome") -> None:
         self._exigir_rede()
+        if not self.conhece_alunos:
+            raise AlunoDesconhecido(f"o servidor não conhece o aluno {aluno_id}")
         self.consumos.append((aluno_id, registrado_em, origem))
 
     def baixar_base(self) -> list[dict]:
@@ -263,6 +266,31 @@ class FilaOfflineTest(ComPastaTemporaria):
         self.assertEqual(self.fila.pendentes(), 0)
         # E o aluno passa a existir na busca local, sem precisar rebaixar a base.
         self.assertEqual(self.base.buscar("novato")[0]["nome"], "Novato Recente")
+
+    def test_aluno_que_o_servidor_nao_conhece_sai_da_fila(self):
+        """Reenviar não resolve, e guardar para sempre entope a fila.
+
+        Este caso apareceu de verdade: o servidor respondia 404 e o cliente
+        tratava como sucesso, então o almoço sumia sem deixar rastro. Agora ele
+        sai da fila, mas o registro guarda o que aconteceu.
+        """
+        self.fila.registrar(self.aluno)
+        cliente = ClienteFalso(conhece_alunos=False)
+
+        self.assertEqual(self.fila.sincronizar(cliente, self.base), 0)
+        self.assertEqual(cliente.consumos, [])
+        # Não fica preso: a fila esvazia para não atrasar os dias seguintes.
+        self.assertEqual(self.fila.pendentes(), 0)
+
+    def test_servidor_fora_do_ar_e_diferente_de_aluno_desconhecido(self):
+        """Um é transitório e volta; o outro não adianta insistir."""
+        self.fila.registrar(self.aluno)
+
+        self.fila.sincronizar(ClienteFalso(no_ar=False), self.base)
+        self.assertEqual(self.fila.pendentes(), 1, "queda de rede não pode descartar")
+
+        cliente = ClienteFalso()
+        self.assertEqual(self.fila.sincronizar(cliente, self.base), 1)
 
     def test_cadastro_pendente_espera_o_servidor_voltar(self):
         self.fila.registrar_cadastro_pendente("Novato Recente", "1º C")
