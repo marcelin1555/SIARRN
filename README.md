@@ -35,13 +35,11 @@ O sistema **nunca nega comida a aluno**. Quem não confirmou passa igual; a conf
 | Totem e cozinha | Python + Tkinter | Um programa, dois modos: a tela da fila e o painel da cozinha. |
 | App do aluno | Kotlin + Compose | Declaração e QR pessoal. *(fase 2)* |
 
-Nenhuma interface web. O servidor roda só com a biblioteca padrão do Python; o totem usa Pillow apenas para exibir as fotos da tela de início, e funciona sem ele.
+Nenhuma interface web: o servidor expõe só API JSON. Ele roda apenas com a biblioteca padrão do Python. O totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera) — e degrada sem qualquer um dos três, sem que a fila pare.
 
 ```bash
 pip install -r requirements.txt
 ```
-
-Nenhuma interface web. O servidor expõe só API JSON.
 
 ---
 
@@ -121,9 +119,9 @@ Medido nesta máquina: **0,6 ms** para registrar um almoço em disco, e a fila c
 
 **Fase 1 — medir.** Concluída. Servidor, totem com busca por nome, painel da cozinha, fila offline.
 
-**Fase 2 — identificar e prever.** Cartões QR (papel e app), leitura por webcam no totem, app Android com declaração.
+**Fase 2 — identificar.** Cartões QR em papel, leitura por webcam no totem, e os executáveis para instalar sem Python. Feito. Falta o app do aluno.
 
-**Fase 3 — aprender.** Relatórios e correlação entre cardápio e comparecimento.
+**Fase 3 — aprender.** Relatórios, correlação entre cardápio e comparecimento, e a curva da sobra ao longo das semanas.
 
 O que já funciona, em linguagem de escola, está em [CHANGELOG.md](CHANGELOG.md). O design completo, com as decisões e o porquê de cada uma, está em [docs/](docs/2026-08-05-siarrn-design.md). O que vem a seguir, em [PROXIMOS-PASSOS.md](PROXIMOS-PASSOS.md).
 
