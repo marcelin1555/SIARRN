@@ -33,7 +33,7 @@ O sistema **nunca nega comida a aluno**. Quem não confirmou passa igual; a conf
 |---|---|---|
 | Servidor | Python + SQLite | Guarda tudo e calcula a previsão. Roda numa máquina da escola. |
 | Totem e cozinha | Python + Tkinter | Um programa, dois modos: a tela da fila e o painel da cozinha. |
-| App do aluno | Kotlin + Compose | Declaração e QR pessoal. *(fase 2)* |
+| App do aluno | Kotlin + Compose | Cardápio, declaração e o QR na tela do celular. |
 
 Nenhuma interface web: o servidor expõe só API JSON. Ele roda apenas com a biblioteca padrão do Python. O totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera) — e degrada sem qualquer um dos três, sem que a fila pare.
 
@@ -90,6 +90,20 @@ python build.py
 Produz `dist/SIARRN-Servidor/` e `dist/SIARRN-Totem/` — duas pastas independentes, para copiar em pendrive. São separadas de propósito: a máquina do refeitório não carrega o servidor, e a do servidor não carrega as bibliotecas de câmera e imagem (21 MB contra 152 MB).
 
 As fotos ficam **fora** do executável, em `dist/SIARRN-Totem/assets/fotos`, para a escola poder trocá-las sem recompilar nada.
+
+### Gerando o app do aluno
+
+```bash
+cd app-aluno && ./gradlew assembleRelease
+```
+
+Sai em `app/build/outputs/apk/release/app-release.apk`, com **1,2 MB**. O servidor o entrega automaticamente em `http://<servidor>:8770/siarrn.apk` — o aluno abre esse endereço no navegador do celular e instala.
+
+A chave de assinatura fica em `app-aluno/siarrn-release.jks` e **não vai para o repositório**. Guarde uma cópia fora do computador: sem ela não dá para publicar uma atualização reconhecida como sendo o mesmo app. Para gerar outra:
+
+```bash
+keytool -genkeypair -keystore siarrn-release.jks -alias siarrn -keyalg RSA -keysize 2048 -validity 10000
+```
 
 ### Onde ver o que aconteceu
 

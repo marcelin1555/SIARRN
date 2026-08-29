@@ -70,3 +70,9 @@ cartoes/
 .claude/
 .agents/
 skills-lock.json
+
+# --- Chave de assinatura do app (NUNCA versionar) ---
+# Sem ela ninguém consegue publicar uma atualização assinada como sendo a
+# mesma aplicacao. Guarde uma cópia fora do computador.
+*.jks
+*.keystore

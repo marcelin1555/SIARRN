@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  O servidor do SIARRN roda dentro da escola, em HTTP simples, num endereço de
+  rede local. Não há certificado a obter para um IP privado, e exigir HTTPS
+  aqui significaria não funcionar.
+
+  O tráfego em claro é liberado apenas para as faixas privadas — nunca para a
+  internet aberta. Se algum dia o endereço apontar para fora, a conexão falha
+  em vez de sair sem proteção.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.0.0</domain>
+        <domain includeSubdomains="true">172.16.0.0</domain>
+        <domain includeSubdomains="true">192.168.0.0</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

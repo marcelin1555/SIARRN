@@ -8,6 +8,16 @@ Escrito para quem usa o sistema — direção, cozinha e alunos. Quem for mexer 
 
 Primeira versão que roda de ponta a ponta. Já dá para instalar numa máquina, ligar na fila do almoço e começar a medir.
 
+### O aplicativo do aluno
+
+Três telas, e nada além disso: o **cardápio do dia**, os botões de avisar se vem ou não, e o **QR pessoal** para mostrar na fila. É o mesmo código do cartão de papel — quem tem celular não precisa carregar papel, e quem não tem continua atendido.
+
+Na primeira vez o app pergunta o endereço do sistema (a escola informa, num cartaz perto do refeitório) e quem é o dono do aparelho. Depois disso, abre direto no dia de hoje.
+
+O aluno instala abrindo `http://<endereço do sistema>/siarrn.apk` no navegador do celular. O arquivo tem 1,2 MB.
+
+**Avisar continua sendo um favor, não uma obrigação.** Quem não disser nada entra na conta pelo próprio hábito, e o texto do app diz isso com todas as letras. E o QR aparece mesmo sem conexão — é ele que resolve a fila.
+
 ### Dá para instalar sem ter Python
 
 O sistema virou dois programas prontos, um do servidor e um do totem. Copie a pasta, dê um duplo clique, e funciona — não é preciso instalar nada antes.
@@ -74,7 +84,6 @@ O totem abre em tela cheia, sem saída visível, porque fica sozinho numa fila c
 
 ### O que ainda não existe
 
-- **Aplicativo do aluno.** Confirmar presença pelo celular, e o mesmo QR do cartão na tela do aparelho.
 - **Relatórios.** Cruzar o cardápio do dia com quantos apareceram — é assim que se descobre, por exemplo, que peixe traz menos gente. E acompanhar a sobra ao longo das semanas, não só no dia.
 
 ### Antes de a próxima fase valer a pena
