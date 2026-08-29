@@ -23,6 +23,7 @@ from siarrn.base_local import BaseLocal
 from siarrn.cliente_api import ClienteApi
 from siarrn.config_totem import Config
 from siarrn.fila_offline import FilaOffline
+from siarrn.leitor_qr import LeitorQR
 from siarrn.ui_gestao import TelaGestao
 from siarrn.ui_inicio import TelaInicio
 from siarrn.ui_totem import TelaTotem
@@ -67,6 +68,12 @@ class AplicacaoTotem:
         self.tela_gestao: TelaGestao | None = None
 
         self._inatividade = None
+
+        # A camera le em qualquer tela: na apresentacao, mostrar o cartao
+        # registra o almoco sem ninguem tocar em nada.
+        self.leitor = LeitorQR(self._codigo_lido)
+        self.leitor.iniciar()
+
         self.tela_inicio.pack(fill="both", expand=True)
         self.tela_inicio.iniciar()
 
@@ -83,6 +90,7 @@ class AplicacaoTotem:
 
         self._parar = threading.Event()
         self._iniciar_tarefas_de_fundo()
+        self._verificar_camera()
 
         if argumentos.gestao:
             self._trocar_para_gestao()
@@ -133,7 +141,9 @@ class AplicacaoTotem:
 
     def _trocar_para_gestao(self) -> None:
         self._esconder_tudo()
-        self.tela_gestao = TelaGestao(self.raiz, self.cliente, self.fila, self.voltar_ao_totem)
+        self.tela_gestao = TelaGestao(
+            self.raiz, self.cliente, self.fila, self.base, self.voltar_ao_totem
+        )
         self.tela_gestao.pack(fill="both", expand=True)
         self.tela_gestao.iniciar()
 
@@ -161,6 +171,49 @@ class AplicacaoTotem:
             self._inatividade = self.raiz.after(
                 MILISSEGUNDOS_INATIVIDADE, self.voltar_ao_inicio
             )
+
+    # -----------------------------------------------------------------------
+    # Cartao lido pela camera
+    # -----------------------------------------------------------------------
+    def _codigo_lido(self, codigo: str) -> None:
+        """Chamado da thread da camera: devolve o trabalho para a interface."""
+        self.raiz.after(0, lambda: self._tratar_codigo(codigo))
+
+    def _tratar_codigo(self, codigo: str) -> None:
+        """Registra o almoco de quem mostrou o cartao.
+
+        A consulta e local, sobre a copia em disco: o cartao precisa funcionar
+        com a rede fora do ar, que e justamente quando o totem mais precisa ser
+        rapido.
+        """
+        if self.tela_gestao is not None:
+            return  # alguem esta na cozinha; nao e hora de registrar almoco
+
+        aluno = self.base.por_codigo(codigo)
+        if aluno is None:
+            # Cartao de outra escola, QR de um cartaz na parede, brincadeira.
+            # Nao vale interromper quem estiver usando a tela para avisar.
+            self.leitor.esquecer_ultimo()
+            return
+
+        if not self.tela_totem.winfo_ismapped():
+            self._esconder_tudo()
+            self.tela_totem.pack(fill="both", expand=True)
+
+        self.tela_totem.registrar_aluno(aluno, "qr")
+        self._adiar_inicio()
+
+    def _verificar_camera(self) -> None:
+        """Mantém as telas em dia sobre a câmera estar funcionando.
+
+        A câmera pode abrir depois do totem (leva um instante), ser desconectada
+        no meio do almoço, ou ser plugada só na hora. As telas anunciam o cartão
+        conforme o estado real, e nunca antes.
+        """
+        disponivel = self.leitor.disponivel
+        self.tela_inicio.definir_cartao_ativo(disponivel)
+        self.tela_totem.definir_cartao_ativo(disponivel)
+        self.raiz.after(10_000, self._verificar_camera)
 
     # -----------------------------------------------------------------------
     # Tarefas de fundo
@@ -207,6 +260,7 @@ class AplicacaoTotem:
             self.raiz.mainloop()
         finally:
             self._parar.set()
+            self.leitor.parar()
             # Última tentativa de entregar o que ainda estiver na fila.
             try:
                 self.fila.sincronizar(self.cliente, self.base)

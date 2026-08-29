@@ -3,8 +3,18 @@
 # O servidor (siarrn.py) não precisa de nada além da biblioteca padrão: pode
 # rodar numa máquina da escola sem instalar coisa alguma.
 #
-# O totem (totem.py) usa Pillow apenas na tela de início, para exibir fotos em
-# JPG/PNG. O Tkinter sozinho só lê GIF e PPM. Sem Pillow o totem continua
-# funcionando: a tela de início cai para o fundo institucional sólido.
+# O totem (totem.py) usa Pillow na tela de início, para exibir fotos em JPG/PNG
+# — o Tkinter sozinho só lê GIF e PPM. Sem Pillow o totem continua funcionando:
+# a tela de início cai para o fundo institucional sólido.
 
 Pillow>=10.0
+
+# Cartões com QR (fase 2). `qrcode` desenha; `opencv-python` lê pela câmera, com
+# o detector que já vem embutido nele — não é preciso leitor de código de barras
+# nem nenhuma outra biblioteca de decodificação.
+#
+# As duas são opcionais na prática: sem elas, o totem perde a leitura por câmera
+# e a impressão de cartões, mas a busca por nome continua funcionando e a fila
+# anda igual.
+qrcode>=7.4
+opencv-python>=4.8

@@ -150,9 +150,14 @@ def todos() -> list[dict]:
     """Base completa — usada pelo totem no início do dia e pela impressão de cartões.
 
     O totem precisa dessa lista em disco para continuar respondendo se a rede cair.
+
+    `criado_em` vem junto porque a impressão de cartões precisa distinguir quem
+    entrou esta semana: depois da primeira leva, a escola imprime só os novos, e
+    não as cento e vinte folhas de novo.
     """
     linhas = dados.buscar_todos(
-        "SELECT id, nome, nome_busca, turma, codigo FROM aluno WHERE ativo = 1 ORDER BY nome"
+        "SELECT id, nome, nome_busca, turma, codigo, criado_em"
+        "  FROM aluno WHERE ativo = 1 ORDER BY nome"
     )
     return [dict(linha) for linha in linhas]
 

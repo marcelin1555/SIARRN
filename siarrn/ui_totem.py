@@ -103,6 +103,7 @@ class TelaTotem(tk.Frame):
 
         self._toques = 0
         self._retorno_agendado = None
+        self._cartao_ativo = False
 
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
@@ -148,8 +149,14 @@ class TelaTotem(tk.Frame):
         self._campo.bind("<Return>", self._escolher_primeiro)
         self._campo.bind("<Down>", self._escolher_primeiro)
 
+        self._dica_cartao = tk.Label(
+            corpo, text="", bg=tema.COR_FUNDO, fg=tema.COR_SECUNDARIA,
+            font=tema.fonte(tema.TAM_TURMA),
+        )
+        self._dica_cartao.pack(pady=(tema.px(10), 0))
+
         self._lista = tk.Frame(corpo, bg=tema.COR_FUNDO)
-        self._lista.pack(fill="both", expand=True, pady=(tema.px(18), 0))
+        self._lista.pack(fill="both", expand=True, pady=(tema.px(8), 0))
 
         self._linhas = [_LinhaAluno(self._lista, self._registrar) for _ in range(LIMITE_RESULTADOS)]
 
@@ -244,9 +251,18 @@ class TelaTotem(tk.Frame):
         return "break"
 
     def _registrar(self, aluno: dict) -> None:
+        self.registrar_aluno(aluno, "nome")
+
+    def registrar_aluno(self, aluno: dict, origem: str = "nome") -> None:
+        """Registra o almoço e mostra a confirmação.
+
+        `origem` distingue quem passou o cartão de quem digitou o nome. Além de
+        virar estatística, é o que vai dizer à escola se valeu a pena imprimir
+        os cartões — se quase todo mundo continuar digitando, o papel não pegou.
+        """
         # Grava em disco e confirma na hora. Enviar ao servidor é problema da
         # thread de sincronização, não de quem está com o prato na mão.
-        self._fila.registrar(aluno, "nome")
+        self._fila.registrar(aluno, origem)
         self._confirmar(aluno.get("nome", ""), "Bom almoço!", aluno.get("turma", ""))
 
     def _confirmar(self, nome: str, mensagem: str, turma: str = "") -> None:
@@ -300,6 +316,20 @@ class TelaTotem(tk.Frame):
     # -----------------------------------------------------------------------
     # Rodapé e atalho da gestão
     # -----------------------------------------------------------------------
+    def definir_cartao_ativo(self, ativo: bool) -> None:
+        """Mostra (ou esconde) o convite para usar o cartão.
+
+        Só aparece quando a câmera abriu de verdade. Anunciar uma forma de
+        identificação que não funciona seria pior que não anunciar nada: o
+        aluno tentaria, não daria certo, e ele culparia o sistema.
+        """
+        if ativo == self._cartao_ativo:
+            return
+        self._cartao_ativo = ativo
+        self._dica_cartao.configure(
+            text="ou mostre seu cartão para a câmera" if ativo else ""
+        )
+
     def atualizar_status(self) -> None:
         """Estado do equipamento, em letra pequena: informação para a escola."""
         pendentes = self._fila.pendentes()

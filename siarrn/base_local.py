@@ -123,6 +123,23 @@ class BaseLocal:
                     return aluno
         return None
 
+    def por_codigo(self, codigo: str) -> dict | None:
+        """Encontra o aluno pelo código do cartão.
+
+        A busca é local para que o QR funcione com a rede fora do ar — se
+        precisasse consultar o servidor, a leitura por câmera deixaria de valer
+        exatamente na hora em que o totem mais precisa ser rápido.
+        """
+        alvo = (codigo or "").strip().upper()
+        if not alvo:
+            return None
+
+        with self._trava:
+            for aluno in self._alunos:
+                if (aluno.get("codigo") or "").upper() == alvo:
+                    return aluno
+        return None
+
     def amostra(self, quantos: int) -> list[dict]:
         """Alguns alunos quaisquer — usado pela verificação para simular a fila."""
         with self._trava:

@@ -8,6 +8,20 @@ Escrito para quem usa o sistema — direção, cozinha e alunos. Quem for mexer 
 
 Primeira versão que roda de ponta a ponta. Já dá para instalar numa máquina, ligar na fila do almoço e começar a medir.
 
+### Cartões com QR, impressos em papel comum
+
+Cada aluno tem um código próprio, e agora a cozinha consegue imprimir os cartões: no painel, o botão **Cartões dos alunos** gera uma folha pronta para recortar, com o QR, o nome e a turma de cada um. Dez por página, papel comum, sem impressora especial.
+
+Depois da primeira leva, dá para imprimir só quem se cadastrou nos últimos dias, em vez de repetir as doze folhas inteiras.
+
+### O totem lê o cartão pela câmera
+
+Uma webcam comum apontada para a fila. O aluno mostra o cartão — ou o celular, quando o aplicativo existir — e o almoço é registrado em cerca de um segundo, contra três ou quatro digitando o nome. Com cem pessoas esperando, essa diferença é a fila inteira andando.
+
+Funciona até na tela de apresentação: quem mostra o cartão vê o próprio nome em verde sem tocar em nada.
+
+**A câmera é um atalho, nunca uma exigência.** Se ela não existir, falhar ao abrir, ou não enxergar um cartão amassado, nada trava: a busca por nome continua na tela o tempo todo, e o convite para usar o cartão só aparece quando a câmera está mesmo funcionando.
+
 ### O totem tem uma tela de apresentação
 
 Quando ninguém está usando, o totem mostra as fotos do refeitório num painel à esquerda e, à direita, o nome do sistema com **o cardápio do dia** em letras grandes. Dá para saber o que tem no almoço do outro lado do refeitório, sem encostar em nada.

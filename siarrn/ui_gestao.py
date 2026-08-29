@@ -113,10 +113,11 @@ class ContagemEmTracos(tk.Canvas):
 
 
 class TelaGestao(tk.Frame):
-    def __init__(self, master, cliente, fila, ao_voltar) -> None:
+    def __init__(self, master, cliente, fila, base, ao_voltar) -> None:
         super().__init__(master, bg=tema.COR_FUNDO)
         self._cliente = cliente
         self._fila = fila
+        self._base = base
         self._ao_voltar = ao_voltar
         self._agendamento = None
 
@@ -142,7 +143,8 @@ class TelaGestao(tk.Frame):
         self._subtitulo.pack(anchor="w")
 
         for texto, comando in (("Voltar ao totem", self._voltar),
-                               ("Atualizar agora", self.atualizar)):
+                               ("Atualizar agora", self.atualizar),
+                               ("Cartões dos alunos", self._abrir_cartoes)):
             tk.Button(
                 cabecalho, text=texto, command=comando,
                 bg=tema.COR_SECUNDARIA, fg=tema.COR_TEXTO_CLARO,
@@ -397,6 +399,10 @@ class TelaGestao(tk.Frame):
     def _voltar(self) -> None:
         self.parar()
         self._ao_voltar()
+
+    def _abrir_cartoes(self) -> None:
+        from . import ui_cartoes
+        ui_cartoes.abrir(self, self._base)
 
     # -----------------------------------------------------------------------
     # Atualização

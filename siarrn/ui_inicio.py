@@ -80,6 +80,7 @@ class TelaInicio(tk.Frame):
         self._agendamento_cardapio = None
         self._crossfade_ligado = True
         self._cardapio = ""
+        self._cartao_ativo = False
         self._largura = 0
         self._altura = 0
 
@@ -410,6 +411,20 @@ class TelaInicio(tk.Frame):
             )
 
         self._desenhar_botao(meio, altura * 0.74, largura_util)
+
+        if self._cartao_ativo:
+            self._tela.create_text(
+                meio, altura * 0.74 + tema.px(72),
+                text="ou mostre seu cartão para a câmera",
+                fill=tema.COR_PRIMARIA_SUAVE,
+                font=tema.fonte(tema.TAM_INICIO_SUB), tags="conteudo",
+            )
+
+    def definir_cartao_ativo(self, ativo: bool) -> None:
+        """Anuncia o cartão só quando a câmera abriu de verdade."""
+        if ativo != self._cartao_ativo:
+            self._cartao_ativo = ativo
+            self._desenhar_conteudo()
 
     def _desenhar_botao(self, x: float, y: float, largura_util: float) -> None:
         """O botão, como retângulo de cantos arredondados.
