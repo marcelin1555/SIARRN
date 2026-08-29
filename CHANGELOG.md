@@ -68,9 +68,8 @@ O totem abre em tela cheia, sem saída visível, porque fica sozinho numa fila c
 
 ### O que ainda não existe
 
-- **Aplicativo do aluno.** Confirmar presença pelo celular vem na próxima fase.
-- **Cartões com QR code.** Vão acelerar a fila de três segundos para um, e podem ser impressos em papel comum.
-- **Relatórios.** Cruzar o cardápio do dia com quantos apareceram — é assim que se descobre, por exemplo, que peixe traz menos gente.
+- **Aplicativo do aluno.** Confirmar presença pelo celular, e o mesmo QR do cartão na tela do aparelho.
+- **Relatórios.** Cruzar o cardápio do dia com quantos apareceram — é assim que se descobre, por exemplo, que peixe traz menos gente. E acompanhar a sobra ao longo das semanas, não só no dia.
 
 ### Antes de a próxima fase valer a pena
 
@@ -80,7 +79,7 @@ A fila preferencial precisa ser combinada com a cozinha. O sistema mostra na tel
 
 ### Para quem mexe no código
 
-Servidor em Python com SQLite, totem e painel em Tkinter, tudo com biblioteca padrão — nenhuma dependência externa. 94 testes automatizados.
+Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 120 testes automatizados.
 
 Nesta versão o totem foi reescrito: existiu primeiro em JavaFX e passou nos testes, mas foi migrado para Python. A migração eliminou a regra de busca de nomes duplicada em duas linguagens, que era um erro esperando para acontecer na frente da fila.
 
