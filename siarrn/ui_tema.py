@@ -10,8 +10,16 @@ O vocabulário de cor também é herdado, com os mesmos significados do terminal
 de autoatendimento da biblioteca: **verde é ação positiva, laranja é atenção,
 azul é informação**. Quem já usa o SIGBEF lê o SIARRN sem aprender nada novo.
 
-Regras de forma, também do SIGBEF: blocos de cor chapada, sem cantos
-arredondados, sem sombra, sem gradiente.
+**A forma, porém, é própria do SIARRN.** O SIGBEF usa blocos de cor chapada e
+cantos retos, e isso serve a ele: é lido sentado, a meio metro, por quem já
+sabe o que veio fazer. O totem não. Ele fica horas parado onde a escola inteira
+passa, é lido de pé a três metros, e precisa convidar alguém de bandeja na mão
+a encostar nele. Por isso aqui existem cantos arredondados e degradês — a
+mesma paleta e o mesmo vocabulário de cor, em formas que funcionam de longe.
+
+Os degradês dependem de Pillow e caem para cor chapada sem ele; os cantos
+arredondados são Canvas puro e nunca somem. As duas coisas vivem em
+`ui_formas.py`.
 
 O que este tema tem e o do SIGBEF não precisa: **escala por tamanho de tela**.
 O SIGBEF é lido sentado, a meio metro do monitor. O totem é lido de pé, a três
@@ -44,6 +52,18 @@ FAMILIA = "Segoe UI"
 FAMILIA_FORTE = "Segoe UI Semibold"
 
 # ---------------------------------------------------------------------------
+# Forma
+# ---------------------------------------------------------------------------
+# Raio grande: painéis que ocupam boa parte da tela (a foto da apresentação,
+# o botão de entrada). Raio pequeno: cartões e botões, onde 26 arredondaria
+# tanto que o retângulo viraria cápsula.
+RAIO_CANTO = 26
+RAIO_CANTO_PEQUENO = 12
+
+# O topo dos degradês de cabeçalho. O fim é sempre COR_PRIMARIA.
+COR_PRIMARIA_ESCURA = "#12314F"
+
+# ---------------------------------------------------------------------------
 # Tamanhos de fonte, em pontos para uma tela de 1080px de altura
 # ---------------------------------------------------------------------------
 TAM_CABECALHO = 27          # "Digite seu nome"
@@ -54,6 +74,7 @@ TAM_TURMA = 15
 TAM_NOME_CONFIRMADO = 58    # a tela verde — o maior texto do sistema
 TAM_MENSAGEM = 26
 TAM_RODAPE = 11
+TAM_CARDAPIO_FAIXA = 15     # o cardápio em letra pequena, no cabeçalho da busca
 
 # Tela de início — vista do outro lado do refeitório, não da fila
 TAM_INICIO_NOME = 76
@@ -63,7 +84,7 @@ TAM_INICIO_CARDAPIO = 27
 TAM_INICIO_CHAMADA = 22
 
 TAM_GESTAO_TITULO = 21
-TAM_GESTAO_NUMERO = 56      # quantos pratos preparar
+TAM_GESTAO_NUMERO = 48      # quantos pratos preparar
 TAM_GESTAO_ROTULO = 12
 TAM_GESTAO_BLOCO = 26
 TAM_GESTAO_BLOCO_TEXTO = 11
@@ -102,7 +123,7 @@ def px(valor: int) -> int:
 # ---------------------------------------------------------------------------
 # Helpers de cor (mesma lógica do SIGBEF)
 # ---------------------------------------------------------------------------
-def _ajustar_cor(cor_hex: str, proporcao: float) -> str:
+def ajustar_cor(cor_hex: str, proporcao: float) -> str:
     """Clareia (>1) ou escurece (<1) uma cor #RRGGBB."""
     cor_hex = cor_hex.lstrip("#")
     try:
@@ -113,7 +134,7 @@ def _ajustar_cor(cor_hex: str, proporcao: float) -> str:
     return f"#{r:02X}{g:02X}{b:02X}"
 
 
-def _mesclar_branco(cor_hex: str, proporcao: float) -> str:
+def mesclar_branco(cor_hex: str, proporcao: float) -> str:
     """Desloca a cor em direção ao branco preservando o matiz."""
     cor_hex = cor_hex.lstrip("#")
     try:
@@ -124,9 +145,15 @@ def _mesclar_branco(cor_hex: str, proporcao: float) -> str:
     return f"#{r:02X}{g:02X}{b:02X}"
 
 
-COR_PRIMARIA_SUAVE = _mesclar_branco(COR_PRIMARIA, 0.72)   # texto sobre a faixa azul
-COR_SUCESSO_SUAVE = _mesclar_branco(COR_SUCESSO, 0.62)     # texto sobre a tela verde
-COR_HOVER_CARD = "#EAF1F9"                                  # nome da lista sob o cursor
+# Os nomes privados ficam como apelido: três módulos já chamavam
+# `tema._ajustar_cor`, o que mostra que ele nunca foi privado de verdade.
+_ajustar_cor = ajustar_cor
+_mesclar_branco = mesclar_branco
+
+COR_PRIMARIA_SUAVE = mesclar_branco(COR_PRIMARIA, 0.72)   # texto sobre a faixa azul
+COR_SUCESSO_SUAVE = mesclar_branco(COR_SUCESSO, 0.62)     # texto sobre a tela verde
+COR_HOVER_CARD = "#EAF1F9"                                 # nome da lista sob o cursor
+COR_SUCESSO_ESCURA = ajustar_cor(COR_SUCESSO, 0.62)        # base do degradê da confirmação
 
 
 def aplicar_tema(root: tk.Misc) -> None:

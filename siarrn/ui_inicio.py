@@ -24,13 +24,12 @@ from __future__ import annotations
 import threading
 import time
 import tkinter as tk
-from pathlib import Path
 
-from . import config_totem, log, ui_tema as tema
+from . import config_totem, log, ui_formas as formas, ui_tema as tema
 from .cliente_api import ErroDeRede
 
 try:
-    from PIL import Image, ImageDraw, ImageTk
+    from PIL import Image, ImageTk
     PILLOW_DISPONIVEL = True
 except ImportError:  # pragma: no cover - depende do ambiente
     PILLOW_DISPONIVEL = False
@@ -63,8 +62,6 @@ FORCA_DO_TINGIMENTO = 0.18
 # Quanto da largura o painel da foto ocupa.
 FATIA_DA_FOTO = 0.40
 
-# Arredondamento dos cantos do painel da foto e do botão.
-RAIO_CANTO = 26
 
 
 class TelaInicio(tk.Frame):
@@ -178,38 +175,13 @@ class TelaInicio(tk.Frame):
     def _gerar_fundo(largura: int, altura: int):
         """O fundo da tela: degradê azul com faixas diagonais largas.
 
-        Desenhado aqui em vez de carregado de um arquivo porque precisa se
-        ajustar a qualquer resolução sem esticar nem cortar — a escola ainda não
-        definiu o equipamento. É a mesma linguagem das faixas sólidas do SIGBEF.
+        O desenho em si vive em `ui_formas`, porque as outras telas usam o
+        mesmo degradê no cabeçalho. Aqui ficam só as escolhas desta tela: as
+        faixas diagonais, que são da apresentação e de mais nenhuma.
         """
-        de, para = _rgb("#12314F"), _rgb(tema.COR_PRIMARIA)
-        imagem = Image.new("RGB", (largura, altura), de)
-        desenho = ImageDraw.Draw(imagem)
-
-        # Linha a linha: são algumas centenas de operações em vez de milhões.
-        for y in range(altura):
-            proporcao = y / max(1, altura)
-            desenho.line(
-                [(0, y), (largura, y)],
-                fill=tuple(round(de[i] + (para[i] - de[i]) * proporcao) for i in range(3)),
-            )
-
-        faixas = Image.new("RGBA", (largura, altura), (0, 0, 0, 0))
-        pincel = ImageDraw.Draw(faixas)
-        passo = max(160, largura // 7)
-        for indice in range(-2, largura // passo + 3):
-            base = indice * passo
-            pincel.polygon(
-                [
-                    (base, altura),
-                    (base + passo * 0.5, altura),
-                    (base + passo * 0.5 + altura * 0.55, 0),
-                    (base + altura * 0.55, 0),
-                ],
-                fill=(46, 117, 182, 30),
-            )
-
-        return Image.alpha_composite(imagem.convert("RGBA"), faixas).convert("RGB")
+        return formas.gradiente(
+            largura, altura, tema.COR_PRIMARIA_ESCURA, tema.COR_PRIMARIA, faixas=True
+        )
 
     def _aplicar_fundo(self, imagem) -> None:
         self._fundo = ImageTk.PhotoImage(imagem)
@@ -242,10 +214,10 @@ class TelaInicio(tk.Frame):
         topo = (imagem.height - altura) // 2
         imagem = imagem.crop((esquerda, topo, esquerda + largura, topo + altura))
 
-        tingimento = Image.new("RGB", imagem.size, _rgb(tema.COR_PRIMARIA))
+        tingimento = Image.new("RGB", imagem.size, formas.rgb(tema.COR_PRIMARIA))
         imagem = Image.blend(imagem, tingimento, FORCA_DO_TINGIMENTO)
 
-        return _arredondar(imagem, tema.px(RAIO_CANTO), borda=tema.px(3))
+        return formas.arredondar_imagem(imagem, tema.px(tema.RAIO_CANTO), borda=tema.px(3))
 
     def _comecar_rotacao(self) -> None:
         if not self._fotos:
@@ -352,9 +324,9 @@ class TelaInicio(tk.Frame):
         # Sem Pillow ou sem fotos na pasta, o painel vira um bloco sólido mais
         # claro que o fundo — o suficiente para a composição continuar de pé.
         if not self._fotos:
-            _bloco_arredondado(
+            formas.bloco_arredondado(
                 self._tela, x_foto, y_foto, x_foto + largura_foto, y_foto + altura_foto,
-                tema.px(RAIO_CANTO), tema.COR_SECUNDARIA, "conteudo",
+                tema.px(tema.RAIO_CANTO), tema.COR_SECUNDARIA, "conteudo",
             )
 
         self._desenhar_pontos(x_foto + largura_foto / 2, y_foto + altura_foto - tema.px(26))
@@ -436,9 +408,9 @@ class TelaInicio(tk.Frame):
         metade = min(largura_util * 0.42, tema.px(250))
         meia_altura = tema.px(46)
 
-        _bloco_arredondado(
+        formas.bloco_arredondado(
             self._tela, x - metade, y - meia_altura, x + metade, y + meia_altura,
-            tema.px(RAIO_CANTO), tema.COR_SUCESSO, "conteudo",
+            tema.px(tema.RAIO_CANTO), tema.COR_SUCESSO, "conteudo",
         )
         self._tela.create_text(
             x, y, text="TOQUE PARA COMEÇAR", fill=tema.COR_TEXTO_CLARO,
@@ -463,47 +435,3 @@ class TelaInicio(tk.Frame):
                 fill=tema.COR_DESTAQUE if atual else tema.COR_TEXTO_CLARO,
                 outline="", tags="conteudo",
             )
-
-
-def _rgb(cor_hex: str) -> tuple[int, int, int]:
-    cor_hex = cor_hex.lstrip("#")
-    return tuple(int(cor_hex[i:i + 2], 16) for i in (0, 2, 4))
-
-
-def _arredondar(imagem, raio: int, borda: int = 0):
-    """Arredonda os cantos e contorna o painel.
-
-    A borda existe porque foto e fundo podem ficar parecidos demais — uma foto
-    de parede azulada do refeitório sumiria dentro do azul da tela. O contorno
-    âmbar garante que o painel se leia como um objeto sobre o fundo, em qualquer
-    imagem que a escola coloque na pasta.
-    """
-    recortada = imagem.convert("RGBA")
-
-    mascara = Image.new("L", imagem.size, 0)
-    ImageDraw.Draw(mascara).rounded_rectangle(
-        [0, 0, imagem.width - 1, imagem.height - 1], radius=raio, fill=255
-    )
-    recortada.putalpha(mascara)
-
-    if borda > 0:
-        ImageDraw.Draw(recortada).rounded_rectangle(
-            [borda // 2, borda // 2, imagem.width - 1 - borda // 2, imagem.height - 1 - borda // 2],
-            radius=raio, outline=(*_rgb(tema.COR_DESTAQUE), 235), width=borda,
-        )
-    return recortada
-
-
-def _bloco_arredondado(tela, x1, y1, x2, y2, raio, cor, tags) -> None:
-    """Retângulo de cantos arredondados no Canvas.
-
-    O Tk não tem essa primitiva. Composto de dois retângulos cruzados mais um
-    círculo em cada canto — o resultado tem cantos exatos, ao contrário do
-    `create_polygon` com `smooth`, que aproxima por spline e deforma quando o
-    raio é grande em relação ao lado.
-    """
-    diametro = raio * 2
-    tela.create_rectangle(x1 + raio, y1, x2 - raio, y2, fill=cor, outline="", tags=tags)
-    tela.create_rectangle(x1, y1 + raio, x2, y2 - raio, fill=cor, outline="", tags=tags)
-    for cx, cy in ((x1, y1), (x2 - diametro, y1), (x1, y2 - diametro), (x2 - diametro, y2 - diametro)):
-        tela.create_oval(cx, cy, cx + diametro, cy + diametro, fill=cor, outline="", tags=tags)

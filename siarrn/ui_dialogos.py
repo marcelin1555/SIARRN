@@ -8,7 +8,11 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from . import ui_tema as tema
+from . import ui_formas as formas, ui_tema as tema
+
+# O cadastro acontece com a fila parada atrás do aluno, numa tela lida de
+# longe. Ficava em 17 contra os 30 da busca — pequeno demais para o lugar.
+TAM_CAMPO = 22
 
 
 class _DialogoBase(tk.Toplevel):
@@ -40,15 +44,13 @@ class _DialogoBase(tk.Toplevel):
         self.rodape = tk.Frame(self, bg=tema.COR_CARD)
         self.rodape.pack(fill="x", padx=tema.px(24), pady=(0, tema.px(20)))
 
-    def _botao(self, texto: str, comando, cor: str, principal: bool = False) -> tk.Button:
-        botao = tk.Button(
+    def _botao(self, texto: str, comando, cor: str,
+               principal: bool = False) -> formas.BotaoArredondado:
+        botao = formas.BotaoArredondado(
             self.rodape, text=texto, command=comando,
             bg=cor, fg=tema.COR_TEXTO_CLARO,
             font=tema.fonte(13, forte=True),
-            relief="flat", borderwidth=0, cursor="hand2",
-            activebackground=tema._ajustar_cor(cor, 0.85),
-            activeforeground=tema.COR_TEXTO_CLARO,
-            padx=tema.px(20), pady=tema.px(10),
+            padx=tema.px(22), pady=tema.px(11),
         )
         botao.pack(side="right", padx=(tema.px(8), 0))
         if principal:
@@ -88,11 +90,11 @@ class DialogoCadastro(_DialogoBase):
         ).grid(row=0, column=0, sticky="w", pady=(0, tema.px(4)))
 
         self.campo_nome = tk.Entry(
-            self.corpo, font=tema.fonte(17), width=28,
+            self.corpo, font=tema.fonte(TAM_CAMPO), width=24,
             relief="solid", borderwidth=1, highlightthickness=0,
             bg="white", fg=tema.COR_TEXTO, insertbackground=tema.COR_DESTAQUE,
         )
-        self.campo_nome.grid(row=1, column=0, sticky="ew", ipady=tema.px(7))
+        self.campo_nome.grid(row=1, column=0, sticky="ew", ipady=tema.px(11))
         self.campo_nome.insert(0, nome_sugerido)
 
         tk.Label(
@@ -101,11 +103,11 @@ class DialogoCadastro(_DialogoBase):
         ).grid(row=2, column=0, sticky="w", pady=(tema.px(14), tema.px(4)))
 
         self.campo_turma = tk.Entry(
-            self.corpo, font=tema.fonte(17), width=28,
+            self.corpo, font=tema.fonte(TAM_CAMPO), width=24,
             relief="solid", borderwidth=1, highlightthickness=0,
             bg="white", fg=tema.COR_TEXTO, insertbackground=tema.COR_DESTAQUE,
         )
-        self.campo_turma.grid(row=3, column=0, sticky="ew", ipady=tema.px(7))
+        self.campo_turma.grid(row=3, column=0, sticky="ew", ipady=tema.px(11))
         self.corpo.columnconfigure(0, weight=1)
 
         self._botao("Cadastrar e almoçar", self._confirmar, tema.COR_SUCESSO, principal=True)

@@ -35,7 +35,9 @@ O sistema **nunca nega comida a aluno**. Quem não confirmou passa igual; a conf
 | Totem e cozinha | Python + Tkinter | Um programa, dois modos: a tela da fila e o painel da cozinha. |
 | App do aluno | Kotlin + Compose | Cardápio, declaração e o QR na tela do celular. |
 
-Nenhuma interface web: o servidor expõe só API JSON. Ele roda apenas com a biblioteca padrão do Python. O totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera) — e degrada sem qualquer um dos três, sem que a fila pare.
+Nenhuma interface web: o servidor expõe só API JSON. Ele roda apenas com a biblioteca padrão do Python. O totem usa Pillow (fotos e degradês), qrcode (cartões) e OpenCV (câmera) — e degrada sem qualquer um dos três, sem que a fila pare.
+
+As formas que o Tk não tem — cantos arredondados, degradês, botões redondos — ficam em [`siarrn/ui_formas.py`](siarrn/ui_formas.py). Só os degradês dependem de Pillow; o resto é Canvas puro e nunca some.
 
 ```bash
 pip install -r requirements.txt

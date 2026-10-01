@@ -4,6 +4,43 @@ Escrito para quem usa o sistema — direção, cozinha e alunos. Quem for mexer 
 
 ---
 
+## Versão 0.2.0 — 1 de outubro de 2026
+
+### As telas agora parecem todas do mesmo sistema
+
+O totem tinha duas aparências. A tela de apresentação era colorida e viva; as
+telas de uso — a busca do aluno, o painel da cozinha, as janelinhas de cadastro
+— eram cinzas e quadradas. O aluno tocava numa e caía na outra.
+
+Agora é tudo a mesma linguagem: **fundos em degradê azul, cantos arredondados e
+botões redondos**, com as mesmas cores de sempre. Verde continua sendo "deu
+certo", laranja continua sendo "atenção", azul continua sendo "informação".
+
+Mudanças que dá para ver na fila:
+
+- **O campo de digitar o nome ficou grande e destacado**, num cartão branco com
+  contorno dourado sobre a faixa azul. É a única coisa que o aluno precisa
+  fazer, e agora é a coisa mais visível da tela.
+- **O cardápio do dia aparece também na tela de busca.** Antes só estava na
+  apresentação: quem tocava na tela perdia a informação e tinha de esperar o
+  totem voltar sozinho.
+- **A tela verde diz o que tem no prato.** Antes desejava bom almoço sem dizer
+  de quê.
+- **Os nomes nunca mais aparecem cortados pela metade.** A lista mostra só os
+  que cabem inteiros e, quando sobram outros, avisa para digitar mais letras.
+- **O cadastro do primeiro almoço ficou com letras maiores.** Ele acontece com
+  a fila parada atrás do aluno, e os campos eram pequenos demais para isso.
+
+No painel da cozinha, o número grande e os três blocos coloridos ganharam
+cantos arredondados, e a tela foi reorganizada para **caber inteira em monitores
+menores** — antes, numa tela de 768 pixels de altura, o espaço de informar o
+cardápio ficava fora da tela.
+
+Nada disso muda o funcionamento: a busca continua local, a fila continua
+andando com a internet caída, e ninguém continua sendo recusado.
+
+---
+
 ## Versão 0.1.0 — 5 de agosto de 2026
 
 Primeira versão que roda de ponta a ponta. Já dá para instalar numa máquina, ligar na fila do almoço e começar a medir.
@@ -94,7 +131,7 @@ A fila preferencial precisa ser combinada com a cozinha. O sistema mostra na tel
 
 ### Para quem mexe no código
 
-Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 120 testes automatizados.
+Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 129 testes automatizados.
 
 Nesta versão o totem foi reescrito: existiu primeiro em JavaFX e passou nos testes, mas foi migrado para Python. A migração eliminou a regra de busca de nomes duplicada em duas linguagens, que era um erro esperando para acontecer na frente da fila.
 

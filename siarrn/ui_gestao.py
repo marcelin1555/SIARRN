@@ -14,7 +14,7 @@ from __future__ import annotations
 import threading
 import tkinter as tk
 
-from . import ui_tema as tema
+from . import ui_formas as formas, ui_tema as tema
 from .cliente_api import ErroDeRede
 
 MILISSEGUNDOS_ATUALIZACAO = 15_000
@@ -127,6 +127,9 @@ class TelaGestao(tk.Frame):
     # Montagem
     # -----------------------------------------------------------------------
     def _montar(self) -> None:
+        # Azul chapado, e de propósito: num cabeçalho desta altura um degradê
+        # seria imperceptível, e ele termina exatamente na cor com que a faixa
+        # alta do totem termina. As duas telas se encontram no mesmo azul.
         cabecalho = tk.Frame(self, bg=tema.COR_PRIMARIA)
         cabecalho.pack(fill="x")
 
@@ -142,44 +145,48 @@ class TelaGestao(tk.Frame):
         )
         self._subtitulo.pack(anchor="w")
 
-        for texto, comando in (("Voltar ao totem", self._voltar),
+        # Empacotados na ordem inversa de propósito: `side="right"` empilha da
+        # direita para a esquerda, então esta ordem é a que aparece na tela da
+        # esquerda para a direita. A versão anterior lia ao contrário e
+        # qualquer um que mexesse depois tropeçaria nisso.
+        for texto, comando in (("Cartões dos alunos", self._abrir_cartoes),
                                ("Atualizar agora", self.atualizar),
-                               ("Cartões dos alunos", self._abrir_cartoes)):
-            tk.Button(
+                               ("Voltar ao totem", self._voltar)):
+            formas.BotaoArredondado(
                 cabecalho, text=texto, command=comando,
-                bg=tema.COR_SECUNDARIA, fg=tema.COR_TEXTO_CLARO,
-                font=tema.fonte(12, forte=True), relief="flat", borderwidth=0,
-                cursor="hand2", padx=tema.px(16), pady=tema.px(8),
-                activebackground=tema._ajustar_cor(tema.COR_SECUNDARIA, 0.85),
-                activeforeground=tema.COR_TEXTO_CLARO,
-            ).pack(side="right", padx=(0, tema.px(20)))
+                bg=tema.COR_SECUNDARIA, font=tema.fonte(12, forte=True),
+                padx=tema.px(18), pady=tema.px(9), fundo=tema.COR_PRIMARIA,
+            ).pack(side="right", padx=(0, tema.px(16)), pady=tema.px(14))
 
         corpo = tk.Frame(self, bg=tema.COR_FUNDO)
-        corpo.pack(fill="both", expand=True, padx=tema.px(40), pady=tema.px(24))
-
-        self._montar_destaque(corpo)
-        self._montar_blocos(corpo)
-        self._montar_contagem(corpo)
-        self._montar_registro(corpo)
+        corpo.pack(fill="both", expand=True, padx=tema.px(34), pady=tema.px(14))
 
         self._rodape = tk.Label(
             self, bg=tema.COR_FUNDO, fg=tema.COR_TEXTO_SUAVE,
             font=tema.fonte(tema.TAM_RODAPE),
         )
-        self._rodape.pack(side="bottom", anchor="w", padx=tema.px(40), pady=tema.px(14))
+        self._rodape.pack(side="bottom", anchor="w", padx=tema.px(34), pady=tema.px(10))
+
+        # A ordem importa e não é cosmética: o `pack` atende os widgets na
+        # ordem em que são declarados, e a contagem pede `expand=True`. Se ela
+        # viesse antes, consumiria o que sobra e o formulário da cozinha —
+        # a única parte desta tela em que alguém digita — ficaria fora da tela
+        # numa máquina de 768px de altura.
+        self._montar_destaque(corpo)
+        self._montar_blocos(corpo)
+        self._montar_registro(corpo)
+        self._montar_contagem(corpo)
 
     def _montar_destaque(self, pai: tk.Misc) -> None:
-        bloco = tk.Frame(pai, bg=tema.COR_CARD,
-                         highlightbackground=tema.COR_BORDA, highlightthickness=2)
-        bloco.pack(fill="x")
-
-        # Filete âmbar: o toque de destaque do SIGBEF, em dose pequena.
-        tk.Frame(bloco, bg=tema.COR_DESTAQUE, height=tema.px(6)).pack(fill="x")
+        # Filete âmbar no topo: o toque de destaque do SIGBEF, em dose pequena.
+        cartao = formas.CartaoArredondado(pai, filete=tema.COR_DESTAQUE)
+        cartao.pack(fill="x")
+        bloco = cartao.interior
 
         tk.Label(
             bloco, text="PREPARAR HOJE", bg=tema.COR_CARD, fg=tema.COR_TEXTO_SUAVE,
             font=tema.fonte(tema.TAM_GESTAO_ROTULO, forte=True),
-        ).pack(pady=(tema.px(16), 0))
+        ).pack(pady=(tema.px(12), 0))
 
         self._numero = tk.Label(
             bloco, text="—", bg=tema.COR_CARD, fg=tema.COR_PRIMARIA,
@@ -191,11 +198,11 @@ class TelaGestao(tk.Frame):
             bloco, text="", bg=tema.COR_CARD, fg=tema.COR_TEXTO_SUAVE,
             font=tema.fonte(tema.TAM_GESTAO_DETALHE),
         )
-        self._explicacao.pack(pady=(0, tema.px(18)))
+        self._explicacao.pack(pady=(0, tema.px(14)))
 
     def _montar_blocos(self, pai: tk.Misc) -> None:
         faixa = tk.Frame(pai, bg=tema.COR_FUNDO)
-        faixa.pack(fill="x", pady=tema.px(16))
+        faixa.pack(fill="x", pady=tema.px(12))
 
         self._blocos = {}
         definicoes = (
@@ -205,9 +212,11 @@ class TelaGestao(tk.Frame):
         )
 
         for coluna, (chave, cor, rotulo) in enumerate(definicoes):
-            bloco = tk.Frame(faixa, bg=cor)
-            bloco.grid(row=0, column=coluna, sticky="ew", padx=(0 if coluna == 0 else tema.px(14), 0))
+            cartao = formas.CartaoArredondado(faixa, cor=cor)
+            cartao.grid(row=0, column=coluna, sticky="ew",
+                        padx=(0 if coluna == 0 else tema.px(14), 0))
             faixa.columnconfigure(coluna, weight=1)
+            bloco = cartao.interior
 
             numero = tk.Label(
                 bloco, text="—", bg=cor, fg=tema.COR_TEXTO_CLARO,
@@ -224,9 +233,9 @@ class TelaGestao(tk.Frame):
             self._blocos[chave] = (numero, detalhe)
 
     def _montar_contagem(self, pai: tk.Misc) -> None:
-        bloco = tk.Frame(pai, bg=tema.COR_CARD,
-                         highlightbackground=tema.COR_BORDA, highlightthickness=2)
-        bloco.pack(fill="both", expand=True)
+        cartao = formas.CartaoArredondado(pai)
+        cartao.pack(fill="both", expand=True)
+        bloco = cartao.interior
 
         topo = tk.Frame(bloco, bg=tema.COR_CARD)
         topo.pack(fill="x", padx=tema.px(20), pady=(tema.px(14), 0))
@@ -270,8 +279,18 @@ class TelaGestao(tk.Frame):
         jogado fora nem por quê — e essas são justamente as duas perguntas que
         levam à redução da sobra.
         """
-        faixa = tk.Frame(pai, bg=tema.COR_FUNDO)
-        faixa.pack(fill="x", pady=(tema.px(14), 0))
+        recipiente = tk.Frame(pai, bg=tema.COR_FUNDO)
+        recipiente.pack(side="bottom", fill="x")
+
+        # Um filete separa: o que está acima é o que o sistema sabe, o que está
+        # abaixo é o que só a cozinha pode informar. Uma caixa a mais numa tela
+        # já cheia de caixas não ajudaria ninguém.
+        tk.Frame(recipiente, bg=tema.COR_BORDA, height=1).pack(
+            fill="x", pady=(tema.px(14), 0)
+        )
+
+        faixa = tk.Frame(recipiente, bg=tema.COR_FUNDO)
+        faixa.pack(fill="x", pady=(tema.px(10), 0))
 
         tk.Label(
             faixa, text="Cardápio de hoje", bg=tema.COR_FUNDO, fg=tema.COR_TEXTO_SUAVE,
@@ -298,13 +317,10 @@ class TelaGestao(tk.Frame):
         self._campo_preparado.grid(row=1, column=1, sticky="w", padx=(tema.px(14), 0),
                                    ipady=tema.px(6))
 
-        self._botao_salvar = tk.Button(
+        self._botao_salvar = formas.BotaoArredondado(
             faixa, text="Salvar", command=self._salvar_registro,
-            bg=tema.COR_PRIMARIA, fg=tema.COR_TEXTO_CLARO,
-            font=tema.fonte(12, forte=True), relief="flat", borderwidth=0,
-            cursor="hand2", padx=tema.px(20), pady=tema.px(7),
-            activebackground=tema._ajustar_cor(tema.COR_PRIMARIA, 0.85),
-            activeforeground=tema.COR_TEXTO_CLARO,
+            bg=tema.COR_PRIMARIA, font=tema.fonte(12, forte=True),
+            padx=tema.px(22), pady=tema.px(9),
         )
         self._botao_salvar.grid(row=1, column=2, sticky="w", padx=(tema.px(12), 0))
 
