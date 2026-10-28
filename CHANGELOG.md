@@ -4,6 +4,24 @@ Escrito para quem usa o sistema — direção, cozinha e alunos. Quem for mexer 
 
 ---
 
+## Versão 0.3.0 — 28 de outubro de 2026
+
+### A cozinha corrige cadastros duplicados
+
+O aluno se cadastra sozinho, na fila, com pressa. Quando não se acha na busca — porque digitou "Jao" em vez de "João" — ele toca em "não encontrei meu nome" e vira duas pessoas no sistema.
+
+Isso não era só bagunça na lista. O cadastro abandonado continuava entrando na previsão pelo hábito antigo, e o novo entrava pela média da escola: **o mesmo aluno contado quase duas vezes, por até quatro semanas.** Medido com 120 alunos, doze duplicatas faziam a previsão pedir nove pratos a mais.
+
+No painel, o botão **Corrigir cadastros** mostra os nomes que podem ser da mesma pessoa, com a turma e a data de cadastro de cada um. A cozinha escolhe qual nome fica e os dois viram um só, com todos os almoços juntos.
+
+**O sistema nunca junta ninguém sozinho.** Não há regra que separe erro de digitação de irmão: "Gabriel Costa" e "Gabriela Costa" se parecem mais do que "Jao Pedro" e "João Pedro". Quem decide é quem conhece os alunos.
+
+Os dois cartões continuam valendo depois da junção, e o celular também. Um almoço registrado offline no cadastro antigo chega ao servidor e conta normalmente.
+
+Na mesma tela dá para corrigir um nome digitado errado. Os almoços já registrados continuam com o aluno.
+
+---
+
 ## Versão 0.2.0 — 1 de outubro de 2026
 
 ### As telas agora parecem todas do mesmo sistema
@@ -131,7 +149,7 @@ A fila preferencial precisa ser combinada com a cozinha. O sistema mostra na tel
 
 ### Para quem mexe no código
 
-Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 129 testes automatizados.
+Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 151 testes automatizados.
 
 Nesta versão o totem foi reescrito: existiu primeiro em JavaFX e passou nos testes, mas foi migrado para Python. A migração eliminou a regra de busca de nomes duplicada em duas linguagens, que era um erro esperando para acontecer na frente da fila.
 

@@ -168,6 +168,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if caminho == "/api/alunos":
             return self._cadastrar_aluno(corpo)
+        if caminho == "/api/alunos/renomear":
+            return self._renomear_aluno(corpo)
+        if caminho == "/api/alunos/mesclar":
+            return self._mesclar_alunos(corpo)
         if caminho == "/api/consumo":
             return self._registrar_consumo(corpo)
         if caminho == "/api/declaracao":
@@ -214,6 +218,28 @@ class Handler(BaseHTTPRequestHandler):
             return self._erro(400, str(erro))
         return self._responder(201, aluno)
 
+    def _renomear_aluno(self, corpo: dict) -> None:
+        aluno_id = corpo.get("aluno_id")
+        if not isinstance(aluno_id, int):
+            return self._erro(400, "Informe o aluno_id.")
+        if alunos.por_id(aluno_id) is None:
+            return self._erro(404, "Aluno não encontrado.")
+        try:
+            alunos.renomear(aluno_id, corpo.get("nome") or "", corpo.get("turma"))
+        except ValueError as erro:
+            return self._erro(400, str(erro))
+        return self._responder(200, alunos.por_id(aluno_id))
+
+    def _mesclar_alunos(self, corpo: dict) -> None:
+        manter, descartar = corpo.get("manter_id"), corpo.get("descartar_id")
+        if not isinstance(manter, int) or not isinstance(descartar, int):
+            return self._erro(400, "Informe manter_id e descartar_id.")
+        try:
+            alunos.mesclar(manter, descartar)
+        except ValueError as erro:
+            return self._erro(400, str(erro))
+        return self._responder(200, alunos.por_id(manter))
+
     def _registrar_consumo(self, corpo: dict) -> None:
         """Registra que o aluno almoçou.
 
@@ -225,7 +251,8 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(aluno_id, int):
             return self._erro(400, "Informe o aluno_id.")
 
-        if alunos.por_id(aluno_id) is None:
+        aluno_id = alunos.resolver(aluno_id)
+        if aluno_id is None:
             return self._erro(404, "Aluno não encontrado.")
 
         refeicao_id = corpo.get("refeicao_id") or refeicoes.garantir()["id"]
@@ -244,7 +271,8 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(corpo.get("vai"), bool):
             return self._erro(400, "Informe 'vai' como true ou false.")
 
-        if alunos.por_id(aluno_id) is None:
+        aluno_id = alunos.resolver(aluno_id)
+        if aluno_id is None:
             return self._erro(404, "Aluno não encontrado.")
 
         refeicao_id = corpo.get("refeicao_id") or refeicoes.garantir()["id"]

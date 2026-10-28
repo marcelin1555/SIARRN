@@ -95,6 +95,55 @@ def renomear(aluno_id: int, nome: str, turma: str | None = None) -> None:
         )
 
 
+def mesclar(manter_id: int, descartar_id: int) -> None:
+    """Junta dois cadastros da mesma pessoa, com o histórico dos dois.
+
+    Cadastro feito na fila gera duplicata: o aluno não se acha na busca e
+    toca em "não encontrei meu nome". Sem juntar, o registro abandonado segue
+    contando na previsão pelo hábito antigo por quatro semanas — um prato a
+    mais por duplicata, no sistema que existe para reduzir sobra.
+
+    O descartado fica inativo e apontando para o que ficou, nunca apagado:
+    o cartão e o celular dele continuam valendo.
+    """
+    if manter_id == descartar_id:
+        raise ValueError("Escolha dois cadastros diferentes.")
+
+    with dados.db_cursor() as cur:
+        ativos = cur.execute(
+            "SELECT COUNT(*) FROM aluno WHERE id IN (?, ?) AND ativo = 1",
+            (manter_id, descartar_id),
+        ).fetchone()[0]
+        if ativos != 2:
+            raise ValueError("Cadastro não encontrado ou já mesclado.")
+
+        # Mesmo dia nos dois cadastros: a chave primária descarta o repetido,
+        # que é o certo — a pessoa almoçou uma vez só. Na declaração, vale a
+        # do cadastro que fica.
+        for tabela, colunas in (("consumo", "refeicao_id, registrado_em, origem"),
+                                ("declaracao", "refeicao_id, vai, declarado_em")):
+            cur.execute(
+                f"INSERT OR IGNORE INTO {tabela} (aluno_id, {colunas}) "  # noqa: S608
+                f"SELECT ?, {colunas} FROM {tabela} WHERE aluno_id = ?",
+                (manter_id, descartar_id),
+            )
+            cur.execute(f"DELETE FROM {tabela} WHERE aluno_id = ?", (descartar_id,))  # noqa: S608
+
+        # A data de cadastro mais antiga, senão os almoços herdados caem fora
+        # das "oportunidades" e a taxa do aluno passa de 100%.
+        cur.execute(
+            "UPDATE aluno SET criado_em = MIN(criado_em,"
+            " (SELECT criado_em FROM aluno WHERE id = ?)) WHERE id = ?",
+            (descartar_id, manter_id),
+        )
+        # Quem já apontava para o descartado passa a apontar para o novo:
+        # o redirecionamento nunca tem mais de um salto.
+        cur.execute("UPDATE aluno SET mesclado_em = ? WHERE mesclado_em = ?",
+                    (manter_id, descartar_id))
+        cur.execute("UPDATE aluno SET ativo = 0, mesclado_em = ? WHERE id = ?",
+                    (manter_id, descartar_id))
+
+
 # ---------------------------------------------------------------------------
 # Leitura
 # ---------------------------------------------------------------------------
@@ -111,11 +160,30 @@ def por_id(aluno_id: int) -> dict | None:
     )
 
 
+def resolver(aluno_id: int) -> int | None:
+    """O id que vale hoje para este aluno, seguindo uma mesclagem se houver.
+
+    O totem pode mandar o id de um cadastro já mesclado: a cópia local dele
+    só se atualiza de tempos em tempos, e a fila offline guarda o id antigo.
+    """
+    linha = dados.buscar_um(
+        "SELECT k.id FROM aluno a JOIN aluno k ON k.id = COALESCE(a.mesclado_em, a.id)"
+        " WHERE a.id = ? AND k.ativo = 1",
+        (aluno_id,),
+    )
+    return linha["id"] if linha else None
+
+
 def por_codigo(codigo: str) -> dict | None:
-    """Encontra o aluno pelo código do QR. Aceita o código em qualquer caixa."""
+    """Encontra o aluno pelo código do QR. Aceita o código em qualquer caixa.
+
+    O código de um cadastro mesclado leva ao cadastro que ficou.
+    """
     return _como_dict(
         dados.buscar_um(
-            "SELECT id, nome, turma, codigo FROM aluno WHERE codigo = ? AND ativo = 1",
+            "SELECT k.id, k.nome, k.turma, k.codigo"
+            "  FROM aluno a JOIN aluno k ON k.id = COALESCE(a.mesclado_em, a.id)"
+            " WHERE a.codigo = ? AND k.ativo = 1",
             (codigo.strip().upper(),),
         )
     )
@@ -154,9 +222,15 @@ def todos() -> list[dict]:
     `criado_em` vem junto porque a impressão de cartões precisa distinguir quem
     entrou esta semana: depois da primeira leva, a escola imprime só os novos, e
     não as cento e vinte folhas de novo.
+
+    `codigos_antigos` traz, separados por vírgula, os códigos de cadastros que
+    foram mesclados neste — para o cartão velho continuar passando no totem
+    mesmo sem rede.
     """
     linhas = dados.buscar_todos(
-        "SELECT id, nome, nome_busca, turma, codigo, criado_em"
+        "SELECT id, nome, nome_busca, turma, codigo, criado_em,"
+        "       (SELECT GROUP_CONCAT(d.codigo) FROM aluno d"
+        "         WHERE d.mesclado_em = aluno.id) AS codigos_antigos"
         "  FROM aluno WHERE ativo = 1 ORDER BY nome"
     )
     return [dict(linha) for linha in linhas]

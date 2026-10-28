@@ -1,8 +1,8 @@
 """
 SIARRN — Diálogos do totem
 
-Dois, e os dois são curtos de propósito: um acontece com a fila do almoço
-parada atrás da pessoa, o outro com alguém da cozinha esperando.
+Curtos de propósito: o cadastro acontece com a fila do almoço parada atrás da
+pessoa, os outros com alguém da cozinha esperando.
 """
 from __future__ import annotations
 
@@ -81,8 +81,11 @@ class DialogoCadastro(_DialogoBase):
     vira fila parada.
     """
 
-    def __init__(self, pai: tk.Misc, nome_sugerido: str = "") -> None:
-        super().__init__(pai, "Primeiro almoço", "Vamos te cadastrar. Só acontece uma vez.")
+    def __init__(self, pai: tk.Misc, nome_sugerido: str = "", turma_sugerida: str = "",
+                 titulo: str = "Primeiro almoço",
+                 subtitulo: str = "Vamos te cadastrar. Só acontece uma vez.",
+                 texto_botao: str = "Cadastrar e almoçar") -> None:
+        super().__init__(pai, titulo, subtitulo)
 
         tk.Label(
             self.corpo, text="Nome completo", bg=tema.COR_CARD, fg=tema.COR_TEXTO_SUAVE,
@@ -108,9 +111,10 @@ class DialogoCadastro(_DialogoBase):
             bg="white", fg=tema.COR_TEXTO, insertbackground=tema.COR_DESTAQUE,
         )
         self.campo_turma.grid(row=3, column=0, sticky="ew", ipady=tema.px(11))
+        self.campo_turma.insert(0, turma_sugerida)
         self.corpo.columnconfigure(0, weight=1)
 
-        self._botao("Cadastrar e almoçar", self._confirmar, tema.COR_SUCESSO, principal=True)
+        self._botao(texto_botao, self._confirmar, tema.COR_SUCESSO, principal=True)
         self._botao("Cancelar", self._cancelar, tema.COR_TEXTO_SUAVE)
 
         self.campo_nome.bind("<Return>", lambda e: self.campo_turma.focus_set())
@@ -164,9 +168,38 @@ class DialogoPin(_DialogoBase):
             self.campo.delete(0, "end")
 
 
+class DialogoConfirmacao(_DialogoBase):
+    """Pergunta antes de algo que não se desfaz."""
+
+    def __init__(self, pai: tk.Misc, titulo: str, pergunta: str, texto_botao: str) -> None:
+        super().__init__(pai, titulo, "Não dá para desfazer.")
+        tk.Label(
+            self.corpo, text=pergunta, bg=tema.COR_CARD, fg=tema.COR_TEXTO,
+            font=tema.fonte(13), wraplength=tema.px(420), justify="left",
+        ).pack(anchor="w")
+        self._botao(texto_botao, self._confirmar, tema.COR_SUCESSO, principal=True)
+        self._botao("Cancelar", self._cancelar, tema.COR_TEXTO_SUAVE)
+        self.bind("<Escape>", lambda e: self._cancelar())
+        self._centralizar_e_esperar()
+
+    def _confirmar(self) -> None:
+        self.resultado = True
+        self.destroy()
+
+
 def pedir_cadastro(pai: tk.Misc, nome_sugerido: str = "") -> tuple[str, str] | None:
     return DialogoCadastro(pai, nome_sugerido).resultado
 
 
 def pedir_pin(pai: tk.Misc, pin_esperado: str) -> bool:
     return bool(DialogoPin(pai, pin_esperado).resultado)
+
+
+def pedir_correcao(pai: tk.Misc, nome: str, turma: str) -> tuple[str, str] | None:
+    return DialogoCadastro(pai, nome, turma, titulo="Corrigir nome",
+                           subtitulo="Os almoços já registrados continuam com o aluno.",
+                           texto_botao="Salvar").resultado
+
+
+def confirmar(pai: tk.Misc, titulo: str, pergunta: str, texto_botao: str) -> bool:
+    return bool(DialogoConfirmacao(pai, titulo, pergunta, texto_botao).resultado)

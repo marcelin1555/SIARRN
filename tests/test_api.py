@@ -156,6 +156,49 @@ class Consumo(ServidorNoAr):
         self.assertEqual(status, 200)
 
 
+class CorrecaoDeCadastro(ServidorNoAr):
+    def setUp(self) -> None:
+        super().setUp()
+        _, self.velho = self._post("/api/alunos", {"nome": "Joao Pedro", "turma": "9A"})
+        _, self.novo = self._post("/api/alunos", {"nome": "Jao Pedro", "turma": "9 A"})
+
+    def test_renomear(self):
+        status, aluno = self._post(
+            "/api/alunos/renomear", {"aluno_id": self.novo["id"], "nome": "João Pedro"}
+        )
+        self.assertEqual((status, aluno["nome"], aluno["turma"]), (200, "João Pedro", "9 A"))
+
+    def test_renomear_recusa_nome_vazio(self):
+        self.assertEqual(
+            self._post("/api/alunos/renomear", {"aluno_id": self.novo["id"], "nome": " "})[0], 400
+        )
+
+    def test_mesclar_e_almoco_pelo_id_antigo_ainda_conta(self):
+        """Um totem que ficou offline manda o id do cadastro que deixou de existir.
+
+        Antes, isso voltaria 404 e o totem descartaria o almoço.
+        """
+        status, _ = self._post(
+            "/api/alunos/mesclar",
+            {"manter_id": self.velho["id"], "descartar_id": self.novo["id"]},
+        )
+        self.assertEqual(status, 200)
+
+        self.assertEqual(self._post("/api/consumo", {"aluno_id": self.novo["id"]})[0], 200)
+        self.assertEqual(self._post("/api/consumo", {"aluno_id": self.velho["id"]})[1]["novo"], False)
+
+        _, pelo_codigo = self._get(f"/api/alunos/codigo/{self.novo['codigo']}")
+        self.assertEqual(pelo_codigo["id"], self.velho["id"])
+
+    def test_mesclar_exige_dois_ids(self):
+        self.assertEqual(self._post("/api/alunos/mesclar", {"manter_id": self.velho["id"]})[0], 400)
+        self.assertEqual(
+            self._post("/api/alunos/mesclar",
+                       {"manter_id": self.velho["id"], "descartar_id": self.velho["id"]})[0],
+            400,
+        )
+
+
 class Declaracao(ServidorNoAr):
     def setUp(self) -> None:
         super().setUp()

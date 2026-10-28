@@ -156,6 +156,12 @@ def db_cursor():
 #   totem, que pode ter registrado offline às 11h47 e sincronizado às 12h30 —
 #   guardar o momento da escrita no servidor apagaria a hora real da fila.
 #
+# * `aluno.mesclado_em` aponta para o cadastro que absorveu este, quando o mesmo
+#   aluno se cadastrou duas vezes. O registro antigo fica inativo em vez de ser
+#   apagado: o cartão impresso dele, o celular e a fila offline de algum totem
+#   ainda podem trazer o id ou o código antigo, e apagar faria esses almoços
+#   serem descartados.
+#
 # * `refeicao` tem UNIQUE(data, turno) porque hoje só existe almoço, mas o
 #   campo `turno` já deixa a porta aberta pra lanche sem exigir migração.
 SCHEMA_SQL = """
@@ -166,7 +172,8 @@ CREATE TABLE IF NOT EXISTS aluno (
     turma TEXT NOT NULL DEFAULT '',
     codigo TEXT UNIQUE NOT NULL,
     ativo INTEGER NOT NULL DEFAULT 1,
-    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    mesclado_em INTEGER REFERENCES aluno(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_aluno_nome_busca ON aluno(nome_busca);
@@ -207,6 +214,11 @@ def init_db() -> None:
     """Cria o esquema se ainda não existir. Seguro de chamar toda inicialização."""
     with db_cursor() as cur:
         cur.executescript(SCHEMA_SQL)
+        # Bancos criados antes da coluna existir. O CREATE TABLE acima não
+        # altera tabela que já existe.
+        colunas = {linha[1] for linha in cur.execute("PRAGMA table_info(aluno)")}
+        if "mesclado_em" not in colunas:
+            cur.execute("ALTER TABLE aluno ADD COLUMN mesclado_em INTEGER REFERENCES aluno(id)")
 
 
 # ---------------------------------------------------------------------------

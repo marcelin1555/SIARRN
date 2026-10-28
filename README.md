@@ -135,7 +135,9 @@ Medido nesta máquina: **0,6 ms** para registrar um almoço em disco, e a fila c
 
 **Fase 1 — medir.** Concluída. Servidor, totem com busca por nome, painel da cozinha, fila offline.
 
-**Fase 2 — identificar.** Cartões QR em papel, leitura por webcam no totem, e os executáveis para instalar sem Python. Feito. Falta o app do aluno.
+**Fase 2 — identificar.** Concluída. Cartões QR em papel, leitura por webcam no totem, app do aluno, os executáveis para instalar sem Python e a correção de cadastros duplicados.
+
+**Agora — piloto.** Rodar na escola com alunos de verdade. Nada da fase 3 vale a pena antes disso.
 
 **Fase 3 — aprender.** Relatórios, correlação entre cardápio e comparecimento, e a curva da sobra ao longo das semanas.
 

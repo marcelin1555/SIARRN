@@ -1,37 +1,33 @@
 # Próximos passos
 
-A fase 1 está pronta e verificada — ver [CHANGELOG.md](CHANGELOG.md) para o que o sistema já faz, e [docs/](docs/2026-08-05-siarrn-design.md) para as decisões de design e o porquê de cada uma.
+As fases 1 e 2 estão prontas: totem com busca por nome e por QR, painel da cozinha, cartões impressos, app do aluno e os executáveis para instalar sem Python. O que o sistema já faz está no [CHANGELOG.md](CHANGELOG.md); as decisões de design e o porquê de cada uma, em [docs/](docs/2026-08-05-siarrn-design.md).
 
 ---
 
-## Antes de programar qualquer coisa da fase 2
+## O próximo passo não é código
 
-**Combinar a fila preferencial com a cozinha.** O software já mostra quem confirmou presença; se a cozinha não atender essas pessoas primeiro, confirmar não traz vantagem nenhuma — e o aplicativo do aluno nasce sem motivo para ser instalado. Essa conversa vale mais para o projeto do que qualquer tela.
+**Rodar o sistema na escola.** Tudo o que existe até aqui foi testado com 120 alunos fictícios. O número que importa — quanto a previsão erra, quantos pratos sobram — só aparece com a fila de verdade, e cada semana sem uso é uma semana a menos de histórico para a previsão aprender.
 
-**Conseguir uma máquina para o totem.** A fase 1 existe justamente para ser a demonstração desse pedido: dá para rodar num notebook emprestado, na frente da coordenação, com nomes de verdade.
+Para isso falta:
 
----
+- **Uma máquina para o totem** e outra (ou a mesma) para o servidor. Um notebook emprestado basta para começar.
+- **Combinar a fila preferencial com a cozinha.** O software mostra quem confirmou presença; se ninguém for atendido primeiro por isso, confirmar não traz vantagem e o aplicativo não tem por que ser instalado. Essa conversa vale mais do que qualquer tela.
+- **Instalar o app num celular de verdade.** Ele compila, é assinado e o servidor o entrega, mas nunca rodou num aparelho. Todo defeito sério deste projeto apareceu ao rodar, não nos testes.
 
-## Fase 2 — identificar e prever
-
-**Códigos e cartões de papel.** Cada aluno já tem um código aleatório gerado no cadastro (`aluno.codigo`). Falta gerar a folha de QR para impressão — provavelmente uma tela nova no modo gestão, reaproveitando o `qr_util.py` do SIGBEF.
-
-**Leitura de QR no totem.** Câmera comum mais decodificação. É a parte tecnicamente mais chata do projeto: foco, iluminação de refeitório, QR amassado no bolso. A busca por nome continua existindo como alternativa — ela é o que garante que a fila anda quando a câmera implica.
-
-**Aplicativo do aluno** (Kotlin + Compose). Três telas: quem sou eu, o dia de hoje com o cardápio e o botão de confirmar, e o meu QR. O mesmo código funciona impresso ou na tela do celular, então quem não tem aparelho não fica de fora.
-
-Lembrar que a distribuição do APK passa pelo aviso de "fontes desconhecidas" e vai derrubar a adesão. O desenho absorve isso: declaração nunca foi requisito, e quem não instalar entra na conta pelo histórico.
+Nas primeiras semanas, a cozinha deve abrir **Corrigir cadastros** uma vez por dia. O cadastro é feito pelo aluno, na fila, com pressa, e duplicata é inevitável: cada aluno cadastrado duas vezes infla a previsão em cerca de um prato por até quatro semanas.
 
 ---
 
-## Fase 3 — aprender
+## Fase 3 — aprender, depois do piloto
 
-Relatórios e a correlação entre cardápio e comparecimento. O campo `refeicao.cardapio` já é preenchido; falta cruzar. É assim que se descobre que peixe traz trinta por cento menos gente — e é aí que a sobra deixa de ser mistério.
+Relatórios: o cardápio cruzado com o comparecimento, e a curva da sobra ao longo das semanas. O campo `refeicao.cardapio` já é preenchido e o `preparado` também; falta cruzar.
+
+Fica para depois do piloto de propósito. Relatório sobre dado fictício só mostra o que o gerador de dados inventou, e o formato certo — o que a cozinha olha, de quanto em quanto tempo — só se descobre vendo a cozinha usar o painel que já existe.
 
 ---
 
 ## Coisas pequenas que ficaram no caminho
 
-- O totem ainda não tem tela de configuração: o endereço do servidor entra por `--servidor` ou editando `~/.siarrn/totem.json` na mão.
-- Não há tela para corrigir nome digitado errado no cadastro (`alunos.renomear` existe no servidor, mas sem interface).
-- A sobra é calculada no dia, mas não há histórico dela. Saber que sobraram 18 pratos hoje ajuda; ver a curva das últimas três semanas é o que muda o comportamento da cozinha. Fica para a fase 3, junto dos relatórios.
+- O totem não tem tela de configuração: o endereço do servidor entra por `--servidor` ou editando `~/.siarrn/totem.json`. Só incomoda na instalação, uma vez por máquina.
+- Na lista de cadastros parecidos, um par que a cozinha ignora volta a aparecer da próxima vez. Guardar os descartes só vale a pena se a lista encher de falsos positivos na prática; com 120 alunos sem duplicata nenhuma, ela mostra um par.
+- O cadastro na fila não avisa "parece que você já está cadastrado". Prevenir seria melhor que corrigir, mas é mais um passo com a fila parada atrás do aluno. Decidir depois de ver quantas duplicatas aparecem no piloto.

@@ -132,6 +132,53 @@ class BuscaBateComOServidor(ComBanco):
 
 
 # ---------------------------------------------------------------------------
+# Cadastros parecidos
+# ---------------------------------------------------------------------------
+class CadastrosParecidos(unittest.TestCase):
+    @staticmethod
+    def _nomes(*nomes):
+        return [{"id": i, "nome": n} for i, n in enumerate(nomes)]
+
+    def _pares(self, *nomes):
+        return [(a["nome"], b["nome"]) for a, b in texto.pares_suspeitos(self._nomes(*nomes))]
+
+    def test_erro_de_digitacao(self):
+        self.assertEqual(self._pares("João Pedro", "Jao Pedro", "Ana Lima"),
+                         [("João Pedro", "Jao Pedro")])
+
+    def test_nome_abreviado(self):
+        self.assertEqual(self._pares("Maria Silva", "Maria S"), [("Maria Silva", "Maria S")])
+
+    def test_erro_de_digitacao_sem_o_ultimo_sobrenome(self):
+        """O caso mais comum na fila, e o primeiro que a tela real deixou passar."""
+        self.assertEqual(self._pares("Jao Pedro", "Joao Pedro Lima"),
+                         [("Jao Pedro", "Joao Pedro Lima")])
+
+    def test_abreviacao_exige_o_primeiro_nome_inteiro(self):
+        self.assertEqual(self._pares("Maria S", "Mariana Silva Pereira"), [])
+
+    def test_nao_junta_nomes_diferentes(self):
+        self.assertEqual(self._pares("Ana Lima", "Ana Luiza", "Pedro Alves", "Paulo Alves"), [])
+
+    def test_primeiro_nome_sozinho_nao_casa_com_todo_mundo(self):
+        self.assertEqual(self._pares("Maria", "Maria Silva", "Maria Eduarda Costa"), [])
+
+    def test_mais_parecidos_primeiro(self):
+        pares = self._pares("Joao Pedro", "Joao Pedro Lima", "Jao Pedro")
+        self.assertEqual(pares[0], ("Joao Pedro", "Joao Pedro Lima"))
+
+    def test_quinhentos_alunos_cabem_num_instante(self):
+        import random
+        import time
+
+        from siarrn import seed
+        nomes = seed._nomes_unicos(random.Random(1), 500)
+        inicio = time.perf_counter()
+        texto.pares_suspeitos(self._nomes(*nomes))
+        self.assertLess(time.perf_counter() - inicio, 2.0)
+
+
+# ---------------------------------------------------------------------------
 # Base local
 # ---------------------------------------------------------------------------
 class BaseLocalTest(ComPastaTemporaria):
@@ -177,6 +224,13 @@ class BaseLocalTest(ComPastaTemporaria):
 
         self.assertFalse(atualizou)
         self.assertEqual(self.base.tamanho(), 1)
+
+    def test_cartao_de_cadastro_mesclado_ainda_passa(self):
+        self.base.acrescentar({"id": 7, "nome": "Joao Pedro", "codigo": "NOVO2345",
+                               "codigos_antigos": "VELHO234,OUTRO567"})
+        self.assertEqual(self.base.por_codigo("velho234")["id"], 7)
+        self.assertEqual(self.base.por_codigo("OUTRO567")["id"], 7)
+        self.assertIsNone(self.base.por_codigo("NADA2345"))
 
     def test_atualizar_substitui_a_lista(self):
         self.base.acrescentar({"id": 99, "nome": "Antigo Registro"})

@@ -149,7 +149,8 @@ class TelaGestao(tk.Frame):
         # direita para a esquerda, então esta ordem é a que aparece na tela da
         # esquerda para a direita. A versão anterior lia ao contrário e
         # qualquer um que mexesse depois tropeçaria nisso.
-        for texto, comando in (("Cartões dos alunos", self._abrir_cartoes),
+        for texto, comando in (("Corrigir cadastros", self._abrir_cadastros),
+                               ("Cartões dos alunos", self._abrir_cartoes),
                                ("Atualizar agora", self.atualizar),
                                ("Voltar ao totem", self._voltar)):
             formas.BotaoArredondado(
@@ -415,6 +416,10 @@ class TelaGestao(tk.Frame):
     def _voltar(self) -> None:
         self.parar()
         self._ao_voltar()
+
+    def _abrir_cadastros(self) -> None:
+        from . import ui_cadastros
+        ui_cadastros.abrir(self, self._cliente, self._base)
 
     def _abrir_cartoes(self) -> None:
         from . import ui_cartoes

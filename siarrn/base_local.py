@@ -138,6 +138,10 @@ class BaseLocal:
             for aluno in self._alunos:
                 if (aluno.get("codigo") or "").upper() == alvo:
                     return aluno
+            # Cartão de um cadastro que foi mesclado neste.
+            for aluno in self._alunos:
+                if alvo in (aluno.get("codigos_antigos") or "").upper().split(","):
+                    return aluno
         return None
 
     def amostra(self, quantos: int) -> list[dict]:

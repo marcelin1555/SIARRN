@@ -13,7 +13,14 @@ apareceria na frente da fila do almoço, no pior momento possível.
 """
 from __future__ import annotations
 
+import difflib
 import unicodedata
+
+# Medido em nomes reais: "Ana Lima" e "Ana Luiza" dão 0,82 e são pessoas
+# diferentes; "Ana Lima" e "Ana Lina" dão 0,88 e são erro de digitação. Nenhum
+# número separa tudo — "Gabriel Costa" e "Gabriela Costa" dão 0,96 — e por isso
+# a lista vai para uma pessoa decidir, vendo a turma, e nunca mescla sozinha.
+SEMELHANCA_MINIMA = 0.85
 
 
 def normalizar(texto: str) -> str:
@@ -46,3 +53,58 @@ def combina(nome_normalizado: str, termo_normalizado: str) -> bool:
         nome_normalizado.startswith(termo_normalizado)
         or f" {termo_normalizado}" in nome_normalizado
     )
+
+
+def _abrevia(curto: list[str], longo: list[str]) -> bool:
+    """Cada palavra de `curto` começa uma palavra de `longo`, na mesma ordem.
+
+    "maria s" abrevia "maria silva"; "joao pedro" abrevia "joao pedro lima".
+    """
+    posicao = 0
+    for palavra in curto:
+        while posicao < len(longo) and not longo[posicao].startswith(palavra):
+            posicao += 1
+        if posicao == len(longo):
+            return False
+        posicao += 1
+    return True
+
+
+def pares_suspeitos(alunos: list[dict], limite: int = 30) -> list[tuple[dict, dict]]:
+    """Pares de cadastros que podem ser a mesma pessoa, os mais parecidos primeiro.
+
+    Dois jeitos de o mesmo aluno virar dois cadastros na fila:
+
+    * abreviou: "maria s" e "maria silva". O primeiro nome precisa ser igual —
+      senão "maria" abreviaria "mariana".
+    * errou a digitação, às vezes sem o último sobrenome: "jao pedro" e
+      "joao pedro lima". Compara só as palavras que os dois têm.
+
+    Quando um nome tem mais palavras que o outro, o mais curto precisa de duas:
+    com uma só, "maria" casaria com todas as Marias da escola.
+
+    shortcut: um par descartado pela cozinha volta a aparecer da próxima vez;
+    guardar os descartes só se a lista encher de falsos positivos na prática.
+    """
+    nomes = [(a, (a.get("nome_busca") or normalizar(a.get("nome", ""))).split())
+             for a in alunos]
+    encontrados = []
+    for i, (a, pa) in enumerate(nomes):
+        for b, pb in nomes[i + 1:]:
+            if not pa or not pb or pa[0][0] != pb[0][0]:
+                continue
+            n = min(len(pa), len(pb))
+            if len(pa) != len(pb) and n < 2:
+                continue
+            if n >= 2 and pa[0] == pb[0] and (_abrevia(pa, pb) or _abrevia(pb, pa)):
+                encontrados.append((1.0, a, b))
+                continue
+            comparador = difflib.SequenceMatcher(None, " ".join(pa[:n]), " ".join(pb[:n]))
+            if comparador.quick_ratio() < SEMELHANCA_MINIMA:
+                continue
+            nota = comparador.ratio()
+            if nota >= SEMELHANCA_MINIMA:
+                encontrados.append((nota, a, b))
+
+    encontrados.sort(key=lambda par: -par[0])
+    return [(a, b) for _, a, b in encontrados[:limite]]

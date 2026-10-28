@@ -170,6 +170,16 @@ class ClienteApi:
         if resposta is None:
             raise AlunoDesconhecido(f"o servidor não conhece o aluno {aluno_id}")
 
+    def renomear(self, aluno_id: int, nome: str, turma: str) -> None:
+        if not self._requisitar("POST", "/api/alunos/renomear",
+                                {"aluno_id": aluno_id, "nome": nome, "turma": turma}):
+            raise ErroDeRede("o servidor não conhece esse aluno")
+
+    def mesclar(self, manter_id: int, descartar_id: int) -> None:
+        if not self._requisitar("POST", "/api/alunos/mesclar",
+                                {"manter_id": manter_id, "descartar_id": descartar_id}):
+            raise ErroDeRede("mesclagem não confirmada")
+
     def definir_cardapio(self, cardapio: str) -> None:
         """O que vai ser servido hoje. Só a cozinha sabe."""
         self._requisitar("POST", "/api/refeicao/cardapio", {"cardapio": cardapio})
