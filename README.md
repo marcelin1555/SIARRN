@@ -148,3 +148,10 @@ O que já funciona, em linguagem de escola, está em [CHANGELOG.md](CHANGELOG.md
 ## Licença
 
 MIT.
+
+---
+
+<p align="center">
+  <img src="docs/morrow-studio.svg" alt="Morrow Studio" width="56"><br>
+  Desenvolvido pela <strong>Morrow Studio</strong> para o Centro Educacional Felinto Elísio.
+</p>
