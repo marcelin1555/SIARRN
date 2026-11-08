@@ -2,6 +2,8 @@
 
 As fases 1 e 2 estão prontas: totem com busca por nome e por QR, painel da cozinha, cartões impressos, app do aluno e os executáveis para instalar sem Python. O que o sistema já faz está no [CHANGELOG.md](CHANGELOG.md); as decisões de design e o porquê de cada uma, em [docs/](docs/2026-08-05-siarrn-design.md).
 
+Este arquivo é a versão técnica. A mesma sequência, em linguagem de escola e com o que a direção precisa decidir em cada etapa, está no [ROADMAP.md](ROADMAP.md).
+
 ---
 
 ## O próximo passo não é código
@@ -13,6 +15,9 @@ Para isso falta:
 - **Uma máquina para o totem** e outra (ou a mesma) para o servidor. Um notebook emprestado basta para começar.
 - **Combinar a fila preferencial com a cozinha.** O software mostra quem confirmou presença; se ninguém for atendido primeiro por isso, confirmar não traz vantagem e o aplicativo não tem por que ser instalado. Essa conversa vale mais do que qualquer tela.
 - **Instalar o app num celular de verdade.** Ele compila, é assinado e o servidor o entrega, mas nunca rodou num aparelho. Todo defeito sério deste projeto apareceu ao rodar, não nos testes.
+- **Cópia de segurança do banco.** É o único item de código que bloqueia o piloto. Hoje tudo vive num `siarrn.db` só; se a máquina do servidor falhar, vai junto o histórico de que a previsão depende. Uma cópia diária com `sqlite3.Connection.backup` (seguro com o WAL ligado) para outra pasta ou pendrive, guardando as últimas N, resolve.
+- **Uma semana de linha de base.** Antes de ligar, a cozinha anota do jeito atual quanto preparou e quanto sobrou. Sem esse número não dá para dizer, no fim do piloto, se a previsão erra menos que o método antigo.
+- **A decisão da direção sobre os dados.** Nome, turma e dias de almoço de menores de idade. Quem acessa, por quanto tempo se guarda e se as famílias são avisadas é decisão da escola, não do código, mas precisa vir antes do primeiro aluno real.
 
 Todo dia, **o painel da cozinha precisa ser aberto antes de servir**. É nessa hora que a previsão do dia fica guardada, e é ela que se compara depois com quantos almoçaram para saber quanto o sistema erra. Dia sem painel aberto é dia sem medida.
 
