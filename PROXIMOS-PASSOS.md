@@ -14,6 +14,8 @@ Para isso falta:
 - **Combinar a fila preferencial com a cozinha.** O software mostra quem confirmou presença; se ninguém for atendido primeiro por isso, confirmar não traz vantagem e o aplicativo não tem por que ser instalado. Essa conversa vale mais do que qualquer tela.
 - **Instalar o app num celular de verdade.** Ele compila, é assinado e o servidor o entrega, mas nunca rodou num aparelho. Todo defeito sério deste projeto apareceu ao rodar, não nos testes.
 
+Todo dia, **o painel da cozinha precisa ser aberto antes de servir**. É nessa hora que a previsão do dia fica guardada, e é ela que se compara depois com quantos almoçaram para saber quanto o sistema erra. Dia sem painel aberto é dia sem medida.
+
 Nas primeiras semanas, a cozinha deve abrir **Corrigir cadastros** uma vez por dia. O cadastro é feito pelo aluno, na fila, com pressa, e duplicata é inevitável: cada aluno cadastrado duas vezes infla a previsão em cerca de um prato por até quatro semanas.
 
 ---

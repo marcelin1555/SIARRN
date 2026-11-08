@@ -338,6 +338,22 @@ class Integracao(ServidorNoAr):
         self.assertEqual(refeicao["previsto"], painel["previsto"])
         self.assertEqual(alunos.contar(), 1)
 
+    def test_previsao_guardada_congela_quando_a_fila_comeca(self):
+        """Quem se cadastra na fila não pode inflar o número que a cozinha usou."""
+        for nome in ("Ana Lima", "Beto Rocha"):
+            self._post("/api/alunos", {"nome": nome})
+        _, antes = self._get("/api/cozinha/hoje")
+        self.assertEqual(antes["previsto"], 2)
+
+        _, novo = self._post("/api/alunos", {"nome": "Carla Dias"})
+        self._post("/api/consumo", {"aluno_id": novo["id"]})
+        for nome in ("Davi Souza", "Elis Nunes"):
+            self._post("/api/alunos", {"nome": nome})
+
+        _, depois = self._get("/api/cozinha/hoje")
+        self.assertEqual(depois["previsto"], 5)
+        self.assertEqual(refeicoes.garantir()["previsto"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,6 +4,18 @@ Escrito para quem usa o sistema — direção, cozinha e alunos. Quem for mexer 
 
 ---
 
+## Versão 0.3.1 — 7 de novembro de 2026
+
+### A previsão guardada é a que a cozinha viu
+
+O painel recalcula o número o dia inteiro, e cada aluno que se cadastra na fila entra na conta. Até aqui, o número guardado no fim do dia era o último calculado, já inflado por quem se cadastrou depois de a comida estar pronta. Comparar esse número com o que de fato saiu faria a previsão parecer pior do que é.
+
+Agora o número guardado congela no primeiro almoço registrado. A tela continua mostrando a conta ao vivo; o que fica para comparar depois é o número da hora de cozinhar.
+
+Para isso funcionar, **a cozinha precisa abrir o painel antes de começar a servir**. Dia em que ninguém abre o painel fica sem previsão guardada.
+
+---
+
 ## Versão 0.3.0 — 28 de outubro de 2026
 
 ### A cozinha corrige cadastros duplicados
@@ -149,7 +161,7 @@ A fila preferencial precisa ser combinada com a cozinha. O sistema mostra na tel
 
 ### Para quem mexe no código
 
-Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 151 testes automatizados.
+Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 152 testes automatizados.
 
 Nesta versão o totem foi reescrito: existiu primeiro em JavaFX e passou nos testes, mas foi migrado para Python. A migração eliminou a regra de busca de nomes duplicada em duas linguagens, que era um erro esperando para acontecer na frente da fila.
 

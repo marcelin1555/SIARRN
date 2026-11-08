@@ -85,9 +85,20 @@ def definir_preparado(refeicao_id: int, quantidade: int) -> None:
 
 
 def registrar_previsao(refeicao_id: int, previsto: int) -> None:
-    """Guarda a previsão do dia para depois dar pra comparar com o real."""
+    """Guarda a previsão do dia para depois dar pra comparar com o real.
+
+    Congela no primeiro almoço registrado. O painel recalcula o dia todo, e
+    cada aluno que se cadastra na fila soma mais um silencioso à conta: sem o
+    congelamento, o número guardado seria o do fim do almoço, inflado por quem
+    já comeu, e não o que a cozinha viu ao decidir quanto cozinhar.
+    """
     dados.executar(
-        "UPDATE refeicao SET previsto = ? WHERE id = ?", (previsto, refeicao_id)
+        """
+        UPDATE refeicao SET previsto = ?
+         WHERE id = ?
+           AND NOT EXISTS (SELECT 1 FROM consumo WHERE refeicao_id = ?)
+        """,
+        (previsto, refeicao_id, refeicao_id),
     )
 
 
