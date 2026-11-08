@@ -16,6 +16,9 @@ from pathlib import Path
 
 PROJETO = Path.cwd()
 
+_icone = PROJETO / "assets" / "siarrn.ico"
+ICONE = str(_icone) if _icone.exists() else None
+
 a = Analysis(
     ['siarrn.py'],
     pathex=[str(PROJETO)],
@@ -54,6 +57,7 @@ exe = EXE(
     # não na frente dos alunos.
     console=True,
     disable_windowed_traceback=False,
+    icon=ICONE,
 )
 
 coll = COLLECT(

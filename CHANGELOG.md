@@ -22,6 +22,10 @@ Depois da instalação, as duas coisas mudam no painel da cozinha, no botão **E
 
 O botão de voltar ao totem também deixou de ficar cortado em telas estreitas.
 
+### O SIARRN ganhou uma marca
+
+Um prato visto de cima com uma contagem de cinco dentro: quatro riscos e um corte, como se contava no papel. Ela aparece na barra de título do totem, no ícone dos dois programas do Windows e no ícone do app no celular, no lugar do ícone provisório.
+
 ### As telas ficaram nítidas
 
 Em computadores com a escala de tela do Windows acima de 100% — o padrão na maioria dos notebooks —, o totem era desenhado pequeno e esticado pelo Windows, e todo o texto saía levemente borrado. Agora ele desenha nos pixels reais da tela.

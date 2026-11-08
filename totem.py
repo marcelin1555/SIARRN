@@ -22,7 +22,7 @@ import tkinter as tk
 from siarrn import log, ui_dialogos, ui_tema as tema
 from siarrn.base_local import BaseLocal
 from siarrn.cliente_api import ClienteApi
-from siarrn.config_totem import Config
+from siarrn.config_totem import Config, pasta_do_programa
 from siarrn.fila_offline import FilaOffline
 from siarrn.leitor_qr import LeitorQR
 from siarrn.ui_gestao import TelaGestao
@@ -107,6 +107,12 @@ class AplicacaoTotem:
     # Janela
     # -----------------------------------------------------------------------
     def _configurar_janela(self) -> None:
+        # `default` vale também para os diálogos, que sem isso mostrariam a
+        # pena do Tk na barra de título.
+        icone = pasta_do_programa() / "assets" / "siarrn.ico"
+        if icone.is_file():
+            self.raiz.iconbitmap(default=str(icone))
+
         if self._argumentos.janela:
             self.raiz.geometry("1100x740")
             return

@@ -35,8 +35,8 @@ Para começar
 1. Ligue o servidor na máquina que vai guardar os dados (pasta
    SIARRN-Servidor). Ele mostra na tela um endereço parecido com
    http://192.168.0.10:8770 — anote.
-2. Abra o SIARRN-Totem.exe nesta pasta. Na primeira vez, informe aquele
-   endereço editando o arquivo de configuração descrito abaixo.
+2. Abra o SIARRN-Totem.exe nesta pasta. Na primeira vez ele pergunta
+   aquele endereço e um PIN novo para a cozinha.
 
 As fotos da tela de apresentação
 --------------------------------
@@ -47,8 +47,8 @@ alfabética.
 Configuração desta máquina
 --------------------------
 Fica em C:/Users/<seu usuário>/.siarrn/totem.json e guarda o endereço do
-servidor e o PIN da cozinha (padrão 1234). Troque o PIN antes de deixar o
-totem no refeitório.
+servidor e o PIN da cozinha. Para trocar os dois depois, use o botão
+"Este totem" no painel da cozinha.
 
 Painel da cozinha
 -----------------
@@ -89,6 +89,11 @@ def preparar_totem() -> None:
             shutil.rmtree(fotos_destino)
         shutil.copytree(fotos_origem, fotos_destino)
         print(f"    fotos copiadas para {fotos_destino.relative_to(PROJETO)}")
+
+    # O ícone da janela é lido daqui em tempo de execução, ao lado do .exe.
+    icone = PROJETO / "assets" / "siarrn.ico"
+    if icone.is_file():
+        shutil.copy2(icone, destino / "assets" / "siarrn.ico")
 
     (destino / "LEIA-ME.txt").write_text(LEIA_ME, encoding="utf-8")
 

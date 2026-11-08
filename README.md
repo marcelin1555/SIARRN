@@ -1,8 +1,19 @@
-# SIARRN
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/marca/logo-escuro.png">
+    <img src="assets/marca/logo-claro.png" alt="SIARRN — Sistema Integrado de Almoço e Refeição" width="420">
+  </picture>
+</p>
 
-### Sistema Integrado de Almoço e Refeição
+<p align="center">
+  <em>Conta quantos alunos realmente almoçam, para que a cozinha pare de preparar no chute.</em>
+</p>
 
-*Conta quantos alunos realmente almoçam, para que a cozinha pare de preparar no chute.*
+<p align="center">
+  <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-1F4E79">
+  <img alt="Android" src="https://img.shields.io/badge/android-Kotlin%20%2B%20Compose-2E75B6">
+  <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-F2A900"></a>
+</p>
 
 ---
 
@@ -24,6 +35,19 @@ previsão = quem confirmou presença
 Quem confirmou conta inteiro. Quem avisou ausência sai. **Quem não fez nada entra pela própria probabilidade histórica.** É isso que impede o sistema de morrer como o formulário morreu: com adesão zero às declarações ele vira média histórica pura e ainda entrega número útil; com adesão total, vira contagem exata. Não existe cenário em que ele quebre — adesão é ganho, nunca requisito.
 
 O sistema **nunca nega comida a aluno**. Quem não confirmou passa igual; a confirmação dá fila preferencial, não direito ao prato.
+
+---
+
+## Telas
+
+| | |
+|---|---|
+| ![Tela de apresentação do totem, com o cardápio do dia](docs/telas/inicio.png) | ![Busca por nome no totem](docs/telas/busca.png) |
+| **Apresentação.** O cardápio do dia, legível do outro lado do refeitório. Um toque em qualquer lugar começa. | **Busca.** Duas letras bastam. Só aparecem os nomes que cabem inteiros na tela. |
+| ![Confirmação verde do almoço registrado](docs/telas/confirmacao.png) | ![Painel da cozinha com a previsão do dia](docs/telas/gestao.png) |
+| **Confirmação.** O nome em verde, o que tem no prato, e a fila anda. | **Cozinha.** Quantos pratos preparar e de onde saiu o número. |
+
+Os alunos das imagens são fictícios, gerados pelo `--seed`.
 
 ---
 
@@ -117,6 +141,16 @@ keytool -genkeypair -keystore siarrn-release.jks -alias siarrn -keyalg RSA -keys
 python -m unittest discover -s tests -t .
 ```
 
+### Marca
+
+O símbolo é um prato visto de cima com uma contagem de cinco dentro: almoço e conta. Tudo sai de um script só, com uma geometria só — o SVG, as versões da logo, o `assets/siarrn.ico` dos executáveis e os ícones do app Android:
+
+```bash
+python tools/gerar_marca.py
+```
+
+Os arquivos ficam em [`assets/marca/`](assets/marca/), na paleta do SIGBEF.
+
 ---
 
 ## O totem não pode parar
@@ -147,7 +181,7 @@ O que já funciona, em linguagem de escola, está em [CHANGELOG.md](CHANGELOG.md
 
 ## Licença
 
-MIT.
+[MIT](LICENSE).
 
 ---
 
