@@ -84,11 +84,12 @@ class DialogoCadastro(_DialogoBase):
     def __init__(self, pai: tk.Misc, nome_sugerido: str = "", turma_sugerida: str = "",
                  titulo: str = "Primeiro almoço",
                  subtitulo: str = "Vamos te cadastrar. Só acontece uma vez.",
-                 texto_botao: str = "Cadastrar e almoçar") -> None:
+                 texto_botao: str = "Cadastrar e almoçar",
+                 rotulos: tuple[str, str] = ("Nome completo", "Turma")) -> None:
         super().__init__(pai, titulo, subtitulo)
 
         tk.Label(
-            self.corpo, text="Nome completo", bg=tema.COR_CARD, fg=tema.COR_TEXTO_SUAVE,
+            self.corpo, text=rotulos[0], bg=tema.COR_CARD, fg=tema.COR_TEXTO_SUAVE,
             font=tema.fonte(12),
         ).grid(row=0, column=0, sticky="w", pady=(0, tema.px(4)))
 
@@ -101,7 +102,7 @@ class DialogoCadastro(_DialogoBase):
         self.campo_nome.insert(0, nome_sugerido)
 
         tk.Label(
-            self.corpo, text="Turma", bg=tema.COR_CARD, fg=tema.COR_TEXTO_SUAVE,
+            self.corpo, text=rotulos[1], bg=tema.COR_CARD, fg=tema.COR_TEXTO_SUAVE,
             font=tema.fonte(12),
         ).grid(row=2, column=0, sticky="w", pady=(tema.px(14), tema.px(4)))
 
@@ -199,6 +200,15 @@ def pedir_correcao(pai: tk.Misc, nome: str, turma: str) -> tuple[str, str] | Non
     return DialogoCadastro(pai, nome, turma, titulo="Corrigir nome",
                            subtitulo="Os almoços já registrados continuam com o aluno.",
                            texto_botao="Salvar").resultado
+
+
+def pedir_configuracao(pai: tk.Misc, servidor: str) -> tuple[str, str] | None:
+    """Endereço do servidor e PIN novo. PIN em branco mantém o atual."""
+    return DialogoCadastro(pai, servidor, titulo="Este totem",
+                           subtitulo="O endereço aparece na tela do servidor quando ele abre.",
+                           texto_botao="Salvar",
+                           rotulos=("Endereço do servidor", "PIN novo da cozinha (em branco mantém)"),
+                           ).resultado
 
 
 def confirmar(pai: tk.Misc, titulo: str, pergunta: str, texto_botao: str) -> bool:

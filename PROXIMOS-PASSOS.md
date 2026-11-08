@@ -30,6 +30,5 @@ Fica para depois do piloto de propósito. Relatório sobre dado fictício só mo
 
 ## Coisas pequenas que ficaram no caminho
 
-- O totem não tem tela de configuração: o endereço do servidor entra por `--servidor` ou editando `~/.siarrn/totem.json`. Só incomoda na instalação, uma vez por máquina.
 - Na lista de cadastros parecidos, um par que a cozinha ignora volta a aparecer da próxima vez. Guardar os descartes só vale a pena se a lista encher de falsos positivos na prática; com 120 alunos sem duplicata nenhuma, ela mostra um par.
 - O cadastro na fila não avisa "parece que você já está cadastrado". Prevenir seria melhor que corrigir, mas é mais um passo com a fila parada atrás do aluno. Decidir depois de ver quantas duplicatas aparecem no piloto.

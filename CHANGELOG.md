@@ -14,6 +14,14 @@ Agora o número guardado congela no primeiro almoço registrado. A tela continua
 
 Para isso funcionar, **a cozinha precisa abrir o painel antes de começar a servir**. Dia em que ninguém abre o painel fica sem previsão guardada.
 
+### O totem se configura pela tela
+
+Na primeira vez que o totem abre numa máquina, ele pergunta o endereço do servidor e um PIN novo para a cozinha. Antes, sem configuração, ele procurava o servidor na própria máquina, abria em tela cheia e ficava fora do ar sem avisar ninguém. E o PIN ficava `1234` para sempre, a menos que alguém editasse um arquivo escondido.
+
+Depois da instalação, as duas coisas mudam no painel da cozinha, no botão **Este totem**. Ao salvar, o painel tenta o endereço novo na hora: ou os números aparecem, ou aparece o aviso de servidor fora do ar.
+
+O botão de voltar ao totem também deixou de ficar cortado em telas estreitas.
+
 ---
 
 ## Versão 0.3.0 — 28 de outubro de 2026
@@ -161,7 +169,7 @@ A fila preferencial precisa ser combinada com a cozinha. O sistema mostra na tel
 
 ### Para quem mexe no código
 
-Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 152 testes automatizados.
+Servidor em Python com SQLite e totem em Tkinter. O servidor roda só com a biblioteca padrão; o totem usa Pillow (fotos), qrcode (cartões) e OpenCV (câmera), e degrada sem nenhum dos três. 156 testes automatizados.
 
 Nesta versão o totem foi reescrito: existiu primeiro em JavaFX e passou nos testes, mas foi migrado para Python. A migração eliminou a regra de busca de nomes duplicada em duas linguagens, que era um erro esperando para acontecer na frente da fila.
 

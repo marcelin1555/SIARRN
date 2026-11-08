@@ -65,13 +65,13 @@ O endereço aparece no console. É ele que o totem e os celulares usam.
 python totem.py --servidor=http://192.168.0.10:8770
 ```
 
-O endereço fica salvo em `~/.siarrn/totem.json` e não precisa ser repetido. Abre em tela cheia sem saída — é um totem, não uma janela.
+Na primeira vez que abre numa máquina, o totem pergunta o endereço do servidor e um PIN novo para a cozinha, então o `--servidor` é opcional. Tudo fica salvo em `~/.siarrn/totem.json` e pode ser trocado depois no painel da cozinha, em **Este totem**. Abre em tela cheia sem saída — é um totem, não uma janela.
 
 Ele começa na tela de apresentação, com o cardápio do dia e as fotos de `assets/fotos/` (veja o [LEIA-ME](assets/fotos/LEIA-ME.md) de lá). Um toque leva à busca, e depois de 45 segundos parado ele volta sozinho.
 
 Opções úteis: `--janela` roda sem tela cheia (desenvolvimento) e `--gestao` abre direto no painel da cozinha.
 
-**Modo gestão:** três toques no rodapé, ou `Ctrl+Alt+G`, e o PIN (padrão `1234`, mude em `~/.siarrn/totem.json`).
+**Modo gestão:** três toques no rodapé, ou `Ctrl+Alt+G`, e o PIN (padrão `1234`, mude em **Este totem**).
 
 ### Conferindo a instalação
 

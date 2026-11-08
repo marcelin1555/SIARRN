@@ -67,7 +67,24 @@ class Config:
 
     @servidor.setter
     def servidor(self, url: str) -> None:
-        self._valores["servidor"] = url.strip().rstrip("/")
+        url = url.strip().rstrip("/")
+        # Quem instala digita o que o servidor mostra na tela, "192.168.0.10:8770".
+        # Sem o esquema, o urlsplit não acha o host e o totem iria para localhost.
+        if url and "://" not in url:
+            url = "http://" + url
+        self._valores["servidor"] = url
+
+    @property
+    def salva(self) -> bool:
+        """Falso só na primeira vez que o programa abre nesta máquina."""
+        return ARQUIVO.is_file()
+
+    def aplicar(self, servidor: str, pin: str) -> None:
+        """O que a tela "Este totem" devolve. PIN em branco mantém o atual."""
+        self.servidor = servidor
+        if pin.strip():
+            self.pin = pin
+        self.salvar()
 
     # -- gestão ------------------------------------------------------------
     @property

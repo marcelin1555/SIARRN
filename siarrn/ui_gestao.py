@@ -14,7 +14,7 @@ from __future__ import annotations
 import threading
 import tkinter as tk
 
-from . import ui_formas as formas, ui_tema as tema
+from . import ui_dialogos, ui_formas as formas, ui_tema as tema
 from .cliente_api import ErroDeRede
 
 MILISSEGUNDOS_ATUALIZACAO = 15_000
@@ -113,9 +113,10 @@ class ContagemEmTracos(tk.Canvas):
 
 
 class TelaGestao(tk.Frame):
-    def __init__(self, master, cliente, fila, base, ao_voltar) -> None:
+    def __init__(self, master, cliente, fila, base, ao_voltar, config) -> None:
         super().__init__(master, bg=tema.COR_FUNDO)
         self._cliente = cliente
+        self._config = config
         self._fila = fila
         self._base = base
         self._ao_voltar = ao_voltar
@@ -145,14 +146,15 @@ class TelaGestao(tk.Frame):
         )
         self._subtitulo.pack(anchor="w")
 
-        # Empacotados na ordem inversa de propósito: `side="right"` empilha da
-        # direita para a esquerda, então esta ordem é a que aparece na tela da
-        # esquerda para a direita. A versão anterior lia ao contrário e
-        # qualquer um que mexesse depois tropeçaria nisso.
-        for texto, comando in (("Corrigir cadastros", self._abrir_cadastros),
+        # `side="right"` põe o primeiro da lista na ponta direita, e o `pack`
+        # dá espaço na ordem da lista: numa tela estreita quem corta é o
+        # último. Por isso a saída vem primeiro e a configuração, usada uma vez
+        # por instalação, por último. Na tela a ordem aparece invertida.
+        for texto, comando in (("Voltar ao totem", self._voltar),
+                               ("Atualizar", self.atualizar),
                                ("Cartões dos alunos", self._abrir_cartoes),
-                               ("Atualizar agora", self.atualizar),
-                               ("Voltar ao totem", self._voltar)):
+                               ("Corrigir cadastros", self._abrir_cadastros),
+                               ("Este totem", self._configurar)):
             formas.BotaoArredondado(
                 cabecalho, text=texto, command=comando,
                 bg=tema.COR_SECUNDARIA, font=tema.fonte(12, forte=True),
@@ -420,6 +422,15 @@ class TelaGestao(tk.Frame):
     def _abrir_cadastros(self) -> None:
         from . import ui_cadastros
         ui_cadastros.abrir(self, self._cliente, self._base)
+
+    def _configurar(self) -> None:
+        novo = ui_dialogos.pedir_configuracao(self, self._config.servidor)
+        if not novo:
+            return
+        self._config.aplicar(*novo)
+        # O próprio painel diz se o endereço novo responde: ou os números
+        # aparecem, ou aparece o aviso de servidor fora do ar.
+        self.atualizar()
 
     def _abrir_cartoes(self) -> None:
         from . import ui_cartoes

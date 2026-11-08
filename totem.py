@@ -98,6 +98,10 @@ class AplicacaoTotem:
 
         if argumentos.gestao:
             self._trocar_para_gestao()
+        elif not self.config.salva:
+            # Primeira vez nesta máquina. Sem isto o totem abriria em tela
+            # cheia procurando o servidor em localhost e ficaria offline calado.
+            self.raiz.after(500, self._configurar_primeira_vez)
 
     # -----------------------------------------------------------------------
     # Janela
@@ -146,10 +150,17 @@ class AplicacaoTotem:
     def _trocar_para_gestao(self) -> None:
         self._esconder_tudo()
         self.tela_gestao = TelaGestao(
-            self.raiz, self.cliente, self.fila, self.base, self.voltar_ao_totem
+            self.raiz, self.cliente, self.fila, self.base, self.voltar_ao_totem,
+            self.config,
         )
         self.tela_gestao.pack(fill="both", expand=True)
         self.tela_gestao.iniciar()
+
+    def _configurar_primeira_vez(self) -> None:
+        novo = ui_dialogos.pedir_configuracao(self.tela_inicio, self.config.servidor)
+        if not novo:
+            return  # pergunta de novo na próxima vez que abrir
+        self.config.aplicar(*novo)
 
     def voltar_ao_totem(self) -> None:
         if self.tela_gestao is not None:
