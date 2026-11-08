@@ -424,6 +424,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="com --verificar, simula N almoços para medir a fila")
     argumentos = parser.parse_args(argv)
 
+    tema.nitidez_no_windows()
     if argumentos.verificar:
         return verificar(argumentos)
 

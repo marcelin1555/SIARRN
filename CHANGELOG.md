@@ -22,6 +22,17 @@ Depois da instalação, as duas coisas mudam no painel da cozinha, no botão **E
 
 O botão de voltar ao totem também deixou de ficar cortado em telas estreitas.
 
+### As telas ficaram nítidas
+
+Em computadores com a escala de tela do Windows acima de 100% — o padrão na maioria dos notebooks —, o totem era desenhado pequeno e esticado pelo Windows, e todo o texto saía levemente borrado. Agora ele desenha nos pixels reais da tela.
+
+Junto com isso:
+
+- **Os cantos arredondados deixaram de sair em degraus.** Botões, cartões e a lista de nomes têm a borda suavizada.
+- **Os campos de digitar perderam a borda preta**, que era a única coisa de outra época ao lado dos botões arredondados. Agora têm borda clara e ficam azuis quando estão em uso.
+- **O campo de busca virou um contorno dourado de verdade**, em vez de duas barras grossas nas laterais.
+- **No painel da cozinha, a frase de comparação ("74 a menos que o previsto") não é mais cortada** em telas de 768 pixels de altura, a data aparece como "7/11" e o rodapé diz "1 almoço a enviar" no singular.
+
 ---
 
 ## Versão 0.3.0 — 28 de outubro de 2026

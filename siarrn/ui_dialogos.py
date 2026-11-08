@@ -93,11 +93,7 @@ class DialogoCadastro(_DialogoBase):
             font=tema.fonte(12),
         ).grid(row=0, column=0, sticky="w", pady=(0, tema.px(4)))
 
-        self.campo_nome = tk.Entry(
-            self.corpo, font=tema.fonte(TAM_CAMPO), width=24,
-            relief="solid", borderwidth=1, highlightthickness=0,
-            bg="white", fg=tema.COR_TEXTO, insertbackground=tema.COR_DESTAQUE,
-        )
+        self.campo_nome = formas.campo(self.corpo, font=tema.fonte(TAM_CAMPO), width=24)
         self.campo_nome.grid(row=1, column=0, sticky="ew", ipady=tema.px(11))
         self.campo_nome.insert(0, nome_sugerido)
 
@@ -106,11 +102,7 @@ class DialogoCadastro(_DialogoBase):
             font=tema.fonte(12),
         ).grid(row=2, column=0, sticky="w", pady=(tema.px(14), tema.px(4)))
 
-        self.campo_turma = tk.Entry(
-            self.corpo, font=tema.fonte(TAM_CAMPO), width=24,
-            relief="solid", borderwidth=1, highlightthickness=0,
-            bg="white", fg=tema.COR_TEXTO, insertbackground=tema.COR_DESTAQUE,
-        )
+        self.campo_turma = formas.campo(self.corpo, font=tema.fonte(TAM_CAMPO), width=24)
         self.campo_turma.grid(row=3, column=0, sticky="ew", ipady=tema.px(11))
         self.campo_turma.insert(0, turma_sugerida)
         self.corpo.columnconfigure(0, weight=1)
@@ -143,10 +135,8 @@ class DialogoPin(_DialogoBase):
         super().__init__(pai, "Cozinha", "Digite o PIN de acesso.")
         self._pin_esperado = pin_esperado
 
-        self.campo = tk.Entry(
-            self.corpo, font=tema.fonte(22, forte=True), width=10, show="•",
-            justify="center", relief="solid", borderwidth=1, highlightthickness=0,
-            bg="white", fg=tema.COR_TEXTO, insertbackground=tema.COR_DESTAQUE,
+        self.campo = formas.campo(
+            self.corpo, font=tema.fonte(22, forte=True), width=10, show="•", justify="center",
         )
         self.campo.pack(ipady=tema.px(8))
 

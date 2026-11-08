@@ -92,11 +92,7 @@ class DialogoCadastros(tk.Toplevel):
             corpo, text="Corrigir um nome", bg=tema.COR_CARD,
             fg=tema.COR_TEXTO, font=tema.fonte(14, forte=True),
         ).pack(anchor="w", pady=(0, tema.px(6)))
-        self._busca = tk.Entry(
-            corpo, font=tema.fonte(15), relief="solid", borderwidth=1,
-            highlightthickness=0, bg="white", fg=tema.COR_TEXTO,
-            insertbackground=tema.COR_DESTAQUE,
-        )
+        self._busca = formas.campo(corpo, font=tema.fonte(15))
         self._busca.pack(fill="x", ipady=tema.px(7))
         self._busca.bind("<KeyRelease>", lambda e: self._mostrar_busca())
         self._lista_busca = tk.Frame(corpo, bg=tema.COR_CARD)

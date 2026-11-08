@@ -254,11 +254,13 @@ class TelaGestao(tk.Frame):
         )
         self._servidos.pack(side="right")
 
+        # O rodapé entra antes dos riscos: com pouca altura, o `pack` corta
+        # quem foi empacotado por último, e os riscos aguentam encolher.
+        rodape_bloco = tk.Frame(bloco, bg=tema.COR_CARD)
+        rodape_bloco.pack(side="bottom", fill="x", padx=tema.px(20), pady=(0, tema.px(14)))
+
         self._contagem = ContagemEmTracos(bloco)
         self._contagem.pack(fill="both", expand=True, padx=tema.px(20), pady=tema.px(12))
-
-        rodape_bloco = tk.Frame(bloco, bg=tema.COR_CARD)
-        rodape_bloco.pack(fill="x", padx=tema.px(20), pady=(0, tema.px(14)))
 
         self._comparacao = tk.Label(
             rodape_bloco, text="", bg=tema.COR_CARD, fg=tema.COR_TEXTO_SUAVE,
@@ -300,11 +302,7 @@ class TelaGestao(tk.Frame):
             font=tema.fonte(tema.TAM_GESTAO_ROTULO),
         ).grid(row=0, column=0, sticky="w")
 
-        self._campo_cardapio = tk.Entry(
-            faixa, font=tema.fonte(tema.TAM_GESTAO_DETALHE),
-            relief="solid", borderwidth=1, highlightthickness=0,
-            bg="white", fg=tema.COR_TEXTO, insertbackground=tema.COR_DESTAQUE,
-        )
+        self._campo_cardapio = formas.campo(faixa, font=tema.fonte(tema.TAM_GESTAO_DETALHE))
         self._campo_cardapio.grid(row=1, column=0, sticky="ew", ipady=tema.px(6))
 
         tk.Label(
@@ -312,10 +310,8 @@ class TelaGestao(tk.Frame):
             font=tema.fonte(tema.TAM_GESTAO_ROTULO),
         ).grid(row=0, column=1, sticky="w", padx=(tema.px(14), 0))
 
-        self._campo_preparado = tk.Entry(
+        self._campo_preparado = formas.campo(
             faixa, font=tema.fonte(tema.TAM_GESTAO_DETALHE), width=7, justify="center",
-            relief="solid", borderwidth=1, highlightthickness=0,
-            bg="white", fg=tema.COR_TEXTO, insertbackground=tema.COR_DESTAQUE,
         )
         self._campo_preparado.grid(row=1, column=1, sticky="w", padx=(tema.px(14), 0),
                                    ipady=tema.px(6))
@@ -485,6 +481,8 @@ class TelaGestao(tk.Frame):
     def _texto_do_subtitulo(painel: dict) -> str:
         cardapio = (painel.get("cardapio") or "").strip()
         data = painel.get("data", "")
+        if len(data) == 10:  # "2026-11-07" vira "7/11", como a cozinha escreve
+            data = f"{int(data[8:10])}/{data[5:7]}"
         return f"{data} · {cardapio}" if cardapio else f"{data} · cardápio não informado"
 
     @staticmethod
@@ -554,7 +552,9 @@ class TelaGestao(tk.Frame):
 
     def _texto_dos_pendentes(self) -> str:
         pendentes = self._fila.pendentes()
-        return "fila sincronizada" if pendentes == 0 else f"{pendentes} almoços a enviar"
+        if pendentes == 0:
+            return "fila sincronizada"
+        return "1 almoço a enviar" if pendentes == 1 else f"{pendentes} almoços a enviar"
 
     def _sem_servidor(self, motivo: str) -> None:
         self._explicacao.configure(

@@ -93,6 +93,19 @@ TAM_GESTAO_DETALHE = 14
 _fator = 1.0
 
 
+def nitidez_no_windows() -> None:
+    """Desenha em pixels reais em telas com escala (125%, 150%).
+
+    Sem isto o Windows desenha a janela pequena e estica a imagem pronta, e
+    todo texto do totem sai borrado. Precisa vir antes do primeiro `tk.Tk()`.
+    """
+    try:
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+    except (AttributeError, OSError):
+        pass  # fora do Windows, ou Windows antigo: fica como sempre foi
+
+
 def calibrar(root: tk.Misc) -> None:
     """Ajusta a escala das fontes à tela onde o totem está rodando.
 
@@ -107,6 +120,10 @@ def calibrar(root: tk.Misc) -> None:
     except tk.TclError:
         return
     _fator = max(0.72, min(1.5, altura / 1080))
+    # Fontes em ponto crescem com a escala do Windows; os espaçamentos de
+    # `px()` não. Fixar 96 dpi faz os dois andarem juntos, e quem escala tudo
+    # é o `_fator`, pela altura real da tela.
+    root.tk.call("tk", "scaling", 96 / 72)
 
 
 def fonte(tamanho: int, forte: bool = False) -> tuple[str, int]:

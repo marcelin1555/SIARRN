@@ -343,7 +343,7 @@ class TelaInicio(tk.Frame):
         # O bloco de texto é centralizado na metade de cima; o botão fica na de
         # baixo. Somar as alturas antes de desenhar mantém o espaçamento certo
         # quando o cardápio some ou quebra em duas linhas.
-        alturas = [tema.px(74), tema.px(32), tema.px(28)]
+        alturas = [tema.px(84), tema.px(32), tema.px(28)]
         if tem_cardapio:
             alturas += [tema.px(44), tema.px(38) * linhas_cardapio]
 
@@ -353,7 +353,7 @@ class TelaInicio(tk.Frame):
             meio, y, text="SIARRN", fill=tema.COR_TEXTO_CLARO,
             font=tema.fonte(tema.TAM_INICIO_NOME, forte=True), tags="conteudo",
         )
-        y += tema.px(60)
+        y += tema.px(70)
 
         self._tela.create_text(
             meio, y, text="Sistema Integrado de Almoço e Refeição",

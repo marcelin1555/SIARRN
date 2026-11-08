@@ -53,6 +53,17 @@ class TestGradiente(unittest.TestCase):
         self.assertIsNone(formas.gradiente(60, 0, "#000000", "#FFFFFF"))
 
 
+class TestCantoSuave(unittest.TestCase):
+    def test_borda_tem_tons_intermediarios(self):
+        """Sem tons entre o fundo e a cor, o canto sai em degraus."""
+        mascara = formas.mascara_de_canto(12)
+        self.assertEqual(mascara.size, (24, 24))
+        self.assertEqual(mascara.getpixel((0, 0)), 0)
+        self.assertEqual(mascara.getpixel((12, 12)), 255)
+        tons = set(mascara.getdata())
+        self.assertTrue(any(0 < tom < 255 for tom in tons))
+
+
 class TestRaios(unittest.TestCase):
     def test_o_tema_define_os_dois_raios(self):
         self.assertGreater(tema.RAIO_CANTO, tema.RAIO_CANTO_PEQUENO)

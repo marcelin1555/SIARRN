@@ -36,30 +36,103 @@ def rgb(cor_hex: str) -> tuple[int, int, int]:
 # ---------------------------------------------------------------------------
 # Canvas puro — sempre disponível
 # ---------------------------------------------------------------------------
-def bloco_arredondado(tela, x1, y1, x2, y2, raio, cor, tags):
+def bloco_arredondado(tela, x1, y1, x2, y2, raio, cor, tags) -> "Bloco":
+    """Retângulo de cantos arredondados no Canvas. Ver `Bloco`."""
+    return Bloco(tela, x1, y1, x2, y2, raio, cor, tags)
+
+
+# Desenhado neste tamanho e reduzido: é a redução que suaviza a borda.
+SUPERAMOSTRAGEM = 4
+
+
+def mascara_de_canto(raio: int):
+    """Um disco de diâmetro 2·raio, com a borda suavizada. Precisa de Pillow."""
+    grande = raio * 2 * SUPERAMOSTRAGEM
+    mascara = Image.new("L", (grande, grande), 0)
+    ImageDraw.Draw(mascara).ellipse([0, 0, grande - 1, grande - 1], fill=255)
+    return mascara.resize((raio * 2, raio * 2), Image.LANCZOS)
+
+
+def _cantos(tela, raio: int, cor: str) -> list:
+    """Os quatro cantos de um raio e cor, criados uma vez por janela.
+
+    O cache mora na janela raiz porque o PhotoImage pertence a ela: um cache
+    global devolveria imagens de uma raiz já destruída.
+    """
+    cache = tela._root().__dict__.setdefault("_siarrn_cantos", {})
+    chave = (raio, cor)
+    if chave not in cache:
+        disco = Image.new("RGBA", (raio * 2, raio * 2), (*rgb(cor), 255))
+        disco.putalpha(mascara_de_canto(raio))
+        cache[chave] = [
+            ImageTk.PhotoImage(disco.crop(caixa), master=tela)
+            for caixa in ((0, 0, raio, raio), (raio, 0, raio * 2, raio),
+                          (0, raio, raio, raio * 2), (raio, raio, raio * 2, raio * 2))
+        ]
+    return cache[chave]
+
+
+class Bloco:
     """Retângulo de cantos arredondados no Canvas.
 
-    Composto de dois retângulos cruzados mais um círculo em cada canto — o
-    resultado tem cantos exatos, ao contrário do `create_polygon` com `smooth`,
-    que aproxima por spline e deforma quando o raio é grande em relação ao lado.
+    Dois retângulos cruzados formam a cruz central, e um canto em cada ponta
+    completa a forma. Com Pillow, os cantos são imagens com a borda suavizada;
+    sem ele, círculos do próprio Canvas. O Tk não suaviza nada no Windows, e
+    os círculos saíam em degraus visíveis em todo botão e cartão do sistema.
 
-    Devolve os ids criados, para quem precisar trocar a cor depois sem
-    redesenhar — é o que o hover da lista de nomes faz a cada movimento do dedo.
+    `mover` e `pintar` existem porque a lista de nomes reaproveita os mesmos
+    blocos a cada tecla, em vez de apagar e recriar: recriar faz a lista piscar.
     """
-    raio = max(0, min(raio, (x2 - x1) / 2, (y2 - y1) / 2))
-    diametro = raio * 2
 
-    ids = [
-        tela.create_rectangle(x1 + raio, y1, x2 - raio, y2, fill=cor, outline="", tags=tags),
-        tela.create_rectangle(x1, y1 + raio, x2, y2 - raio, fill=cor, outline="", tags=tags),
-    ]
-    for cx, cy in ((x1, y1), (x2 - diametro, y1),
-                   (x1, y2 - diametro), (x2 - diametro, y2 - diametro)):
-        ids.append(
-            tela.create_oval(cx, cy, cx + diametro, cy + diametro,
-                             fill=cor, outline="", tags=tags)
-        )
-    return ids
+    def __init__(self, tela, x1, y1, x2, y2, raio, cor, tags) -> None:
+        self._tela = tela
+        self._raio_pedido = raio
+        self._raio = 0
+        self._cor = cor
+        self._suave = PILLOW_DISPONIVEL
+        self._retas = [tela.create_rectangle(0, 0, 0, 0, fill=cor, outline="", tags=tags)
+                       for _ in range(2)]
+        if self._suave:
+            self._cantos = [tela.create_image(0, 0, anchor="nw", tags=tags) for _ in range(4)]
+        else:
+            self._cantos = [tela.create_oval(0, 0, 0, 0, fill=cor, outline="", tags=tags)
+                            for _ in range(4)]
+        self.mover(x1, y1, x2, y2)
+
+    def mover(self, x1, y1, x2, y2) -> None:
+        # Coordenadas inteiras: em meio pixel os cantos e as retas deixariam
+        # uma fresta entre eles.
+        x1, y1, x2, y2 = (round(v) for v in (x1, y1, x2, y2))
+        raio = int(max(0, min(self._raio_pedido, (x2 - x1) // 2, (y2 - y1) // 2)))
+        self._raio = raio
+        tela = self._tela
+        tela.coords(self._retas[0], x1 + raio, y1, x2 - raio, y2)
+        tela.coords(self._retas[1], x1, y1 + raio, x2, y2 - raio)
+
+        cantos = ((x1, y1), (x2 - raio, y1), (x1, y2 - raio), (x2 - raio, y2 - raio))
+        if self._suave:
+            for item, ponto in zip(self._cantos, cantos):
+                tela.coords(item, *ponto)
+        else:
+            diametro = raio * 2
+            for item, (cx, cy) in zip(self._cantos, ((x1, y1), (x2 - diametro, y1),
+                                                     (x1, y2 - diametro),
+                                                     (x2 - diametro, y2 - diametro))):
+                tela.coords(item, cx, cy, cx + diametro, cy + diametro)
+        self.pintar(self._cor)
+
+    def pintar(self, cor: str) -> None:
+        self._cor = cor
+        tela = self._tela
+        for item in self._retas:
+            tela.itemconfigure(item, fill=cor)
+        if not self._suave:
+            for item in self._cantos:
+                tela.itemconfigure(item, fill=cor)
+            return
+        imagens = _cantos(tela, self._raio, cor) if self._raio > 0 else [""] * 4
+        for item, imagem in zip(self._cantos, imagens):
+            tela.itemconfigure(item, image=imagem)
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +207,21 @@ def arredondar_imagem(imagem, raio: int, borda: int = 0):
             radius=raio, outline=(*rgb(tema.COR_DESTAQUE), 235), width=borda,
         )
     return recortada
+
+
+def campo(pai: tk.Misc, **kwargs) -> tk.Entry:
+    """Campo de texto do sistema: borda clara do tema, azul quando em foco.
+
+    A borda preta do `relief="solid"` era a única coisa de outra época nas
+    telas, ao lado de botões e cartões arredondados.
+    """
+    opcoes = dict(
+        relief="flat", borderwidth=0, highlightthickness=2,
+        highlightbackground=tema.COR_BORDA, highlightcolor=tema.COR_SECUNDARIA,
+        bg=tema.COR_CARD, fg=tema.COR_TEXTO, insertbackground=tema.COR_PRIMARIA,
+    )
+    opcoes.update(kwargs)
+    return tk.Entry(pai, **opcoes)
 
 
 class FaixaGradiente(tk.Canvas):
@@ -226,11 +314,17 @@ class CartaoArredondado(tk.Canvas):
         except tk.TclError:
             return tema.COR_FUNDO
 
-    def _ao_mudar_conteudo(self, evento) -> None:
-        self.configure(height=evento.height + self._folga * 2)
+    def _ao_mudar_conteudo(self, _evento) -> None:
+        self.configure(height=self.interior.winfo_reqheight() + self._folga * 2)
 
     def _ao_redimensionar(self, evento) -> None:
-        self.itemconfigure(self._janela, width=evento.width - self._folga * 2)
+        # Com menos altura do que o conteúdo pede, o interior é forçado a
+        # caber: sem isso ele mantinha o tamanho natural e a borda do cartão
+        # cortava a última linha. Com altura sobrando, volta ao natural (0).
+        disponivel = evento.height - self._folga * 2
+        apertado = disponivel < self.interior.winfo_reqheight()
+        self.itemconfigure(self._janela, width=evento.width - self._folga * 2,
+                           height=disponivel if apertado else 0)
         if (evento.width, evento.height) == self._tamanho:
             return
         self._tamanho = (evento.width, evento.height)
@@ -287,7 +381,7 @@ class BotaoArredondado(tk.Canvas):
             highlightthickness=0, cursor="hand2",
         )
         self._largura, self._altura = largura, altura
-        self._ids_fundo: list[int] = []
+        self._fundo: Bloco | None = None
         self._desenhar(self._cor)
 
         self.bind("<Button-1>", self._pressionar)
@@ -319,7 +413,7 @@ class BotaoArredondado(tk.Canvas):
 
     def _desenhar(self, cor: str) -> None:
         self.delete("all")
-        self._ids_fundo = bloco_arredondado(
+        self._fundo = bloco_arredondado(
             self, 1, 1, self._largura - 1, self._altura - 1, self._raio, cor, "fundo"
         )
         self.create_text(
@@ -330,8 +424,7 @@ class BotaoArredondado(tk.Canvas):
     def _pintar(self, cor: str) -> None:
         if self._desabilitado:
             return
-        for item in self._ids_fundo:
-            self.itemconfigure(item, fill=cor)
+        self._fundo.pintar(cor)
 
     def _pressionar(self, _evento=None) -> None:
         self._pintar(tema.ajustar_cor(self._cor, 0.70))
@@ -358,8 +451,7 @@ class BotaoArredondado(tk.Canvas):
             self._desabilitado = estado == "disabled"
             # Repintar direto: `_pintar` respeita o estado e não serviria aqui.
             cor = tema.mesclar_branco(self._cor, 0.55) if self._desabilitado else self._cor
-            for item in self._ids_fundo:
-                self.itemconfigure(item, fill=cor)
+            self._fundo.pintar(cor)
             super().configure(cursor="" if self._desabilitado else "hand2")
 
         if kwargs:

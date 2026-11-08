@@ -113,8 +113,7 @@ class _ListaDeNomes(tk.Canvas):
     def _pintar(self, indice: int, cor: str) -> None:
         if self._alunos[indice] is None:
             return
-        for item in self._grupos[indice]["fundo"]:
-            self.itemconfigure(item, fill=cor)
+        self._grupos[indice]["fundo"].pintar(cor)
 
     def _ao_redimensionar(self, evento) -> None:
         if (evento.width, evento.height) == (self._largura, self._altura):
@@ -137,7 +136,6 @@ class _ListaDeNomes(tk.Canvas):
         altura = tema.px(ALTURA_LINHA)
         passo = altura + tema.px(ESPACO_LINHA)
         margem = tema.px(20)
-        raio = tema.px(tema.RAIO_CANTO_PEQUENO)
 
         # Só entram os nomes que cabem **inteiros**. Um nome cortado ao meio
         # pela borda é pior que nome nenhum: de três metros ele parece defeito,
@@ -156,9 +154,7 @@ class _ListaDeNomes(tk.Canvas):
             topo = indice * passo
             self.itemconfigure(grupo["tag"], state="normal")
 
-            # Os seis itens do fundo precisam ser recolocados um a um: o
-            # Canvas não tem "mover o grupo para estas coordenadas".
-            self._mover_fundo(grupo["fundo"], 0, topo, largura, topo + altura, raio)
+            grupo["fundo"].mover(0, topo, largura, topo + altura)
 
             self.coords(grupo["nome"], margem, topo + altura / 2)
             self.itemconfigure(grupo["nome"], text=aluno.get("nome", ""), fill=tema.COR_TEXTO)
@@ -167,16 +163,6 @@ class _ListaDeNomes(tk.Canvas):
             self.itemconfigure(grupo["turma"], text=aluno.get("turma", "") or "")
 
             self._pintar(indice, tema.COR_CARD)
-
-    def _mover_fundo(self, ids: list[int], x1, y1, x2, y2, raio) -> None:
-        raio = max(0, min(raio, (x2 - x1) / 2, (y2 - y1) / 2))
-        diametro = raio * 2
-        self.coords(ids[0], x1 + raio, y1, x2 - raio, y2)
-        self.coords(ids[1], x1, y1 + raio, x2, y2 - raio)
-        cantos = ((x1, y1), (x2 - diametro, y1),
-                  (x1, y2 - diametro), (x2 - diametro, y2 - diametro))
-        for item, (cx, cy) in zip(ids[2:], cantos):
-            self.coords(item, cx, cy, cx + diametro, cy + diametro)
 
     @property
     def primeiro(self) -> dict | None:
@@ -291,9 +277,13 @@ class TelaTotem(tk.Frame):
         cartao = tk.Frame(
             faixa, bg=tema.COR_DESTAQUE, padx=tema.px(3), pady=tema.px(3),
         )
+        # O respiro do texto fica dentro do branco. Posto direto no âmbar, ele
+        # virava duas barras grossas nas laterais em vez de um contorno.
+        interior = tk.Frame(cartao, bg=tema.COR_CARD)
+        interior.pack(fill="x")
 
         self._campo = tk.Entry(
-            cartao, font=tema.fonte(tema.TAM_BUSCA, forte=True),
+            interior, font=tema.fonte(tema.TAM_BUSCA, forte=True),
             relief="flat", borderwidth=0, highlightthickness=0,
             bg=tema.COR_CARD, fg=tema.COR_TEXTO,
             insertbackground=tema.COR_DESTAQUE,
